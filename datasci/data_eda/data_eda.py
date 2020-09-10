@@ -1,13 +1,14 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
+from scipy import stats
 
 
 def data_distirbution_info(dataset):
     """
-       data distribution information.
+       查看数据分布
      Args:
-       dataset: a data frame value.
+       dataset: dataframe数据集
 
      Returns:
 
@@ -43,10 +44,10 @@ def data_distirbution_info(dataset):
 
 def null_value_info(dataset, label='label'):
     """
-       空值数、率信息统计.
+       空值数、率信息统计
      Args:
-       dataset: a data frame value.
-       label: a str value, target name.
+       dataset: dataframe数据集
+       label: 目标变量label值
 
      Returns:
         返回空值统计信息结果
@@ -59,10 +60,10 @@ def null_value_info(dataset, label='label'):
 
 def label_distribution(dataset, label='label'):
     """
-       正、负样本分布信息统计.
+       正、负样本分布信息统计
      Args:
-       dataset: a data frame value.
-       label: a str value, target name.
+       dataset: dataframe数据集
+       label: 目标变量label值
 
      Returns:
         返回正、负样本分布信息结果
@@ -77,8 +78,8 @@ def categorical_feature_count_plot(dataset, feature_names=[], rotation=0):
     """
        离散特征条形图可视化
      Args:
-       dataset: a data frame value.
-       feature_names: a list value,默认可自动识别离散特征.
+       dataset: dataframe数据集
+       feature_names: a list value,默认可自动识别离散特征
        rotation:横坐标值旋转角度，默认是0
      Returns:
         可视化呈现结果
@@ -97,12 +98,46 @@ def categorical_feature_count_plot(dataset, feature_names=[], rotation=0):
     g.map(count_plot, "value")
 
 
-def numberical_feature_dist_plot(dataset, kde=False, feature_names=[], rotation=0):
+def numberical_feature_dist_plot(dataset, feature_names=[], f_rows=2, f_cols=2, kde=True):
     """
        连续特征直方图可视化
      Args:
-       dataset: a data frame value.
-       feature_names: a list value,默认可自动识别连续特征.
+       dataset: dataframe数据集
+       feature_names: 特征名称,默认可自动识别连续特征
+       f_rows: 图行数，默认值2
+       f_cols: 图列数，默认值2
+       kde:KDE分布，默认值True
+       rotation:横坐标值旋转角度，默认是0
+     Returns:
+        可视化呈现结果
+     Owner:wangyue29
+     """
+    if 0 == len(feature_names):
+        feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
+
+    f_rows = len(feature_names)
+    plt.figure(figsize=(6 * f_cols, 6 * f_rows))
+
+    idx = 0
+    for feat_name in feature_names:
+        idx += 1
+        ax = plt.subplot(f_rows, f_cols, idx)
+        sns.distplot(dataset[feat_name], fit=stats.norm, kde=kde)
+
+        idx += 1
+        ax = plt.subplot(f_rows, f_cols, idx)
+        res = stats.probplot(dataset['sepal_length'], plot=plt)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def numberical_feature_dist_plot_without_qq(dataset, kde=False, feature_names=[], rotation=0):
+    """
+       连续特征直方图可视化
+     Args:
+       dataset: dataframe数据集
+       feature_names: a list value,默认可自动识别连续特征
        rotation:横坐标值旋转角度，默认是0
      Returns:
         可视化呈现结果
@@ -125,7 +160,7 @@ def numberical_feature_corr_heatmap_plot(dataset, feature_names=[]):
     """
        连续特征相关热力图可视化
      Args:
-       dataset: a data frame value.
+       dataset: dataframe数据集
        feature_names: a list value,默认可自动识别连续特征.
      Returns:
         可视化呈现结果
@@ -140,3 +175,39 @@ def numberical_feature_corr_heatmap_plot(dataset, feature_names=[]):
     plt.title('Correlation of Numberical Features', y=1, size=16)
     sns.heatmap(corr, annot=True, square=True, vmax=1.0, vmin=-1.0,
                 linewidths=.5, annot_kws={'size': 12, 'weight': 'bold', 'color': 'blue'})
+
+
+def linear_reg_corr_plot(dataset, feature_names=[], label='label', f_rows=0, f_cols=2):
+    """
+       线性回归关系图可视化
+     Args:
+       dataset: dataframe数据集
+       feature_names: 特征名称,默认可自动识别连续特征
+       f_rows: 图行数，默认值2
+       f_cols: 图列数，默认值2
+     Returns:
+        可视化呈现结果
+     Owner:wangyue29
+     """
+
+    if 0 == len(feature_names):
+        feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
+
+    f_rows = len(feature_names)
+    plt.figure(figsize=(6 * f_cols, 6 * f_rows))
+
+    idx = 0
+    for feat_name in feature_names:
+        idx += 1
+        ax = plt.subplot(f_rows, f_cols, idx)
+        sns.regplot(x=feat_name, y=label, data=dataset, ax=ax,
+                    scatter_kws={'marker': '.', 's': 3, 'alpha': 0.3},
+                    line_kws={'color': 'k'});
+
+        plt.xlabel(feat_name)
+        plt.ylabel(label)
+
+        idx += 1
+        ax = plt.subplot(f_rows, f_cols, idx)
+        sns.distplot(dataset[feat_name].dropna())
+        plt.xlabel(feat_name)
