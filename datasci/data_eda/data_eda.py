@@ -20,12 +20,12 @@ def data_distirbution_info(dataset):
     for cat_fea in categorical_feature_names:
         print(cat_fea + '的特征分布如下')
         print('{}特征有个{}不同值'.format(cat_fea, dataset[cat_fea].nunique()))
-        print(dataset[cat_fea].value_counts())
+        print(dataset[cat_fea].value_counts() + '\n')
 
     print('\n')
 
     print('--- 连续特征分布--- ')
-    numberical_feature_names = dataset.select_dtypes(exclude=['int', 'int64', 'float', 'float64']).columns
+    numberical_feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
     for numberical_fea in numberical_feature_names:
         print(numberical_fea + '的特征分布如下')
         print('{:15}'.format(numberical_fea),
@@ -42,20 +42,25 @@ def data_distirbution_info(dataset):
     print (dataset.info(), '\n')
 
 
-def null_value_info(dataset, label='label'):
+def null_value_info(dataset, feature_names=[]):
     """
        空值数、率信息统计
      Args:
        dataset: dataframe数据集
-       label: 目标变量label值
+       feature_names: 特征名称列表，默认所有特征名称
 
      Returns:
         返回空值统计信息结果
      Owner:wangyue29
      """
-    null_value = dataset[label].isnull().sum()
-    null_value_ratio = null_value / dataset[label].shape[0]
-    return '空值数:{},空值率:{}'.format(null_value, null_value_ratio)
+
+    if 0 == len(feature_names):
+        feature_names = dataset.columns
+
+    for feat_name in feature_names:
+        null_value = dataset[feat_name].isnull().sum()
+        null_value_ratio = null_value / dataset[feat_name].shape[0]
+        print ('特征名称:{},空值数:{},空值率:{:0.2f}'.format(feat_name, null_value, null_value_ratio))
 
 
 def label_distribution(dataset, label='label'):
@@ -71,7 +76,7 @@ def label_distribution(dataset, label='label'):
      """
     pos_size = dataset[label].sum()
     neg_size = dataset[label].shape[0] - pos_size
-    return '正样本数:{},负样本数:{},负样本数/正样本数:{}'.format(pos_size, neg_size, pos_size / neg_size)
+    return '正样本数:{},负样本数:{},负样本数/正样本数:{:0.2f}'.format(pos_size, neg_size, pos_size / neg_size)
 
 
 def categorical_feature_count_plot(dataset, feature_names=[], rotation=0):
