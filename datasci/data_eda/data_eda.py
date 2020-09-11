@@ -131,7 +131,7 @@ def numberical_feature_dist_plot(dataset, feature_names=[], f_rows=2, f_cols=2, 
 
         idx += 1
         ax = plt.subplot(f_rows, f_cols, idx)
-        res = stats.probplot(dataset['sepal_length'], plot=plt)
+        res = stats.probplot(dataset[feat_name], plot=plt)
 
     plt.tight_layout()
     plt.show()
