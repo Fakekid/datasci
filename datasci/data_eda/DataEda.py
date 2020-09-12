@@ -82,7 +82,7 @@ def label_distribution(dataset, label='label'):
     return '正样本数:{},负样本数:{},负样本数/正样本数:{:0.2f}'.format(pos_size, neg_size, pos_size / neg_size)
 
 
-def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=2, f_cols=2, palette=None):
+def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=0, f_cols=2, palette=None):
     """
        离散特征条形图可视化
      Args:
@@ -100,7 +100,9 @@ def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=2
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['object', 'category', 'bool', 'string']).columns
 
-    f_rows = len(feature_names)
+    if 0 == f_rows:
+        f_rows = len(feature_names)
+
     plt.figure(figsize=(6 * f_cols, 6 * f_rows))
 
     idx = 0
@@ -115,7 +117,7 @@ def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=2
     plt.show()
 
 
-def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=2, f_cols=2, kde=True):
+def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=0, f_cols=2, kde=True):
     """
        连续特征直方图可视化
      Args:
@@ -132,7 +134,9 @@ def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=2, f_cols=2, 
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
 
-    f_rows = len(feature_names)
+    if 0 == f_rows:
+        f_rows = len(feature_names)
+
     plt.figure(figsize=(6 * f_cols, 6 * f_rows))
 
     idx = 0
@@ -213,7 +217,9 @@ def plot_linear_reg_corr(dataset, feature_names=[], label='label', f_rows=0, f_c
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
 
-    f_rows = len(feature_names)
+    if 0 == f_rows:
+        f_rows = len(feature_names)
+
     plt.figure(figsize=(6 * f_cols, 6 * f_rows))
 
     idx = 0
