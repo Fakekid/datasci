@@ -79,31 +79,40 @@ def label_distribution(dataset, label='label'):
     return '正样本数:{},负样本数:{},负样本数/正样本数:{:0.2f}'.format(pos_size, neg_size, pos_size / neg_size)
 
 
-def categorical_feature_count_plot(dataset, feature_names=[], rotation=0):
+def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=2, f_cols=2, palette=None):
     """
        离散特征条形图可视化
      Args:
        dataset: dataframe数据集
        feature_names: a list value,默认可自动识别离散特征
-       rotation:横坐标值旋转角度，默认是0
+       hue: 在x或y标签划分的同时，再以hue标签划分统计个数
+       f_rows: 图行数，默认值2
+       f_cols: 图列数，默认值2
+       palette: 使用不同的调色板
      Returns:
         可视化呈现结果
      Owner:wangyue29
      """
 
-    def count_plot(x, **kwargs):
-        sns.countplot(x=x)
-        plt.xticks(rotation=rotation)
-
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['object', 'category', 'bool', 'string']).columns
 
-    f = pd.melt(dataset, value_vars=feature_names)
-    g = sns.FacetGrid(f, col="variable", col_wrap=2, sharex=False, sharey=False, size=5)
-    g.map(count_plot, "value")
+    f_rows = len(feature_names)
+    plt.figure(figsize=(6 * f_cols, 6 * f_rows))
+
+    idx = 0
+    for feat_name in feature_names:
+        idx += 1
+        ax = plt.subplot(f_rows, f_cols, idx)
+        sns.countplot(x=feat_name, hue=hue, data=dataset, palette=palette)
+        plt.title('variable=' + '{}'.format(feat_name))
+        plt.xlabel('')
+
+    plt.tight_layout()
+    plt.show()
 
 
-def numberical_feature_dist_plot(dataset, feature_names=[], f_rows=2, f_cols=2, kde=True):
+def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=2, f_cols=2, kde=True):
     """
        连续特征直方图可视化
      Args:
@@ -128,16 +137,19 @@ def numberical_feature_dist_plot(dataset, feature_names=[], f_rows=2, f_cols=2, 
         idx += 1
         ax = plt.subplot(f_rows, f_cols, idx)
         sns.distplot(dataset[feat_name], fit=stats.norm, kde=kde)
+        plt.title('variable=' + '{}'.format(feat_name))
+        plt.xlabel('')
 
         idx += 1
         ax = plt.subplot(f_rows, f_cols, idx)
         res = stats.probplot(dataset[feat_name], plot=plt)
+        plt.title('skew=' + '{:.4f}'.format(stats.skew(dataset[feat_name])))
 
     plt.tight_layout()
     plt.show()
 
 
-def numberical_feature_dist_plot_without_qq(dataset, kde=False, feature_names=[], rotation=0):
+def plot_numberical_feature_dist_without_qq(dataset, kde=False, feature_names=[], rotation=0):
     """
        连续特征直方图可视化
      Args:
@@ -161,7 +173,7 @@ def numberical_feature_dist_plot_without_qq(dataset, kde=False, feature_names=[]
     g.map(dist_plot, "value")
 
 
-def numberical_feature_corr_heatmap_plot(dataset, feature_names=[]):
+def plot_numberical_feature_corr_heatmap(dataset, feature_names=[]):
     """
        连续特征相关热力图可视化
      Args:
@@ -182,7 +194,7 @@ def numberical_feature_corr_heatmap_plot(dataset, feature_names=[]):
                 linewidths=.5, annot_kws={'size': 12, 'weight': 'bold', 'color': 'blue'})
 
 
-def linear_reg_corr_plot(dataset, feature_names=[], label='label', f_rows=0, f_cols=2):
+def plot_linear_reg_corr(dataset, feature_names=[], label='label', f_rows=0, f_cols=2):
     """
        线性回归关系图可视化
      Args:
@@ -209,7 +221,8 @@ def linear_reg_corr_plot(dataset, feature_names=[], label='label', f_rows=0, f_c
                     scatter_kws={'marker': '.', 's': 3, 'alpha': 0.3},
                     line_kws={'color': 'k'});
 
-        plt.xlabel(feat_name)
+        plt.title('variable=' + '{}'.format(feat_name))
+        plt.xlabel('')
         plt.ylabel(label)
 
         idx += 1
