@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from scipy import stats
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 def data_distirbution_info(dataset):
