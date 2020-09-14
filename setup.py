@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 inner_packages = find_packages(include=['datasci.data_loader.*', 'datasci.eda.*',
                                         'datasci.model.*', 'datasci.preprocesing.*'])
 setup(name='datasci',
-      version='0.0.1',
+      version='0.0.2',
       description='TAL WangXiao Data Science Toolkit',
       url='',
       author='wangyue,lianxiaolei',
