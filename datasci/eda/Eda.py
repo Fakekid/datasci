@@ -63,7 +63,7 @@ def null_value_info(dataset, feature_names=[]):
 
     for feat_name in feature_names:
         null_value = dataset[feat_name].isnull().sum()
-        null_value_ratio = null_value / dataset[feat_name].shape[0]
+        null_value_ratio = null_value * 1.0 / dataset[feat_name].shape[0]
         print ('特征名称:{},空值数:{},空值率:{:0.2f}'.format(feat_name, null_value, null_value_ratio))
 
 
@@ -84,14 +84,14 @@ def label_distribution(dataset, label='label'):
     return '正样本数:{},负样本数:{},负样本数/正样本数:{:0.2f}'.format(pos_size, neg_size, pos_size / neg_size)
 
 
-def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=0, f_cols=2, palette=None):
+def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=1, f_cols=2, palette=None):
     """
        离散特征条形图可视化
      Args:
        dataset: dataframe数据集
        feature_names: a list value,默认可自动识别离散特征
        hue: 在x或y标签划分的同时，再以hue标签划分统计个数
-       f_rows: 图行数，默认值2
+       f_rows: 图行数，默认值1
        f_cols: 图列数，默认值2
        palette: 使用不同的调色板，默认是None
      Returns:
@@ -103,7 +103,7 @@ def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=0
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['object', 'category', 'bool', 'string']).columns
 
-    if 0 == f_rows:
+    if 1 == f_rows and 0 != len(feature_names):
         f_rows = len(feature_names)
 
     plt.figure(figsize=(6 * f_cols, 6 * f_rows))
@@ -120,13 +120,13 @@ def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=0
     plt.show()
 
 
-def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=0, f_cols=2, kde=True):
+def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=1, f_cols=2, kde=True):
     """
        连续特征直方图可视化
      Args:
        dataset: dataframe数据集
        feature_names: 特征名称,默认可自动识别连续特征
-       f_rows: 图行数，默认值2
+       f_rows: 图行数，默认值1
        f_cols: 图列数，默认值2
        kde:KDE分布，默认值True
        rotation:横坐标值旋转角度，默认是0
@@ -138,7 +138,7 @@ def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=0, f_cols=2, 
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
 
-    if 0 == f_rows:
+    if 1 == f_rows and 0 != len(feature_names):
         f_rows = len(feature_names)
 
     plt.figure(figsize=(6 * f_cols, 6 * f_rows))
@@ -207,13 +207,13 @@ def plot_numberical_feature_corr_heatmap(dataset, feature_names=[]):
                 linewidths=.5, annot_kws={'size': 12, 'weight': 'bold', 'color': 'blue'})
 
 
-def plot_linear_reg_corr(dataset, feature_names=[], label='label', f_rows=0, f_cols=2):
+def plot_linear_reg_corr(dataset, feature_names=[], label='label', f_rows=1, f_cols=2):
     """
        线性回归关系图可视化
      Args:
        dataset: dataframe数据集
        feature_names: 特征名称,默认可自动识别连续特征
-       f_rows: 图行数，默认值2
+       f_rows: 图行数，默认值1
        f_cols: 图列数，默认值2
      Returns:
         可视化呈现结果
@@ -224,7 +224,7 @@ def plot_linear_reg_corr(dataset, feature_names=[], label='label', f_rows=0, f_c
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
 
-    if 0 == f_rows:
+    if 1 == f_rows and 0 != len(feature_names):
         f_rows = len(feature_names)
 
     plt.figure(figsize=(6 * f_cols, 6 * f_rows))

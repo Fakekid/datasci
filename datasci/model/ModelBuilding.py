@@ -170,3 +170,41 @@ def train(model_name='xgb', model_params={}, X=None, y=None):
 
     clf.fit(X, y)
     return clf
+
+
+def plot_train_test_dataset_feature_dist(X_train=None, X_test=None, feature_names=[], f_rows=1, f_cols=2):
+    """
+       训练集、测试集的特征分布可视化
+     Args:
+       X_train: 训练集
+       X_test: 测试集
+       feature_names: 特征名称,默认可自动识别连续特征
+       f_rows: 图行数，默认值1
+       f_cols: 图列数，默认值2
+     Returns:
+        可视化呈现结果
+
+     Owner:wangyue29
+     """
+
+    if 0 == len(feature_names):
+        feature_names = X_test.columns
+
+    if 1 == f_rows and 0 != len(feature_names):
+        f_rows = len(feature_names)
+
+    plt.figure(figsize=(6 * f_cols, 6 * f_rows))
+
+    idx = 0
+    for feat_name in feature_names:
+        idx += 1
+        ax = plt.subplot(f_rows, f_cols, idx)
+
+        ax = sns.kdeplot(X_train[feat_name], color='Red', shade=True)
+        ax = sns.kdeplot(X_test[feat_name], color='Green', shade=True)
+
+        ax.set_xlabel(feat_name)
+        ax.set_ylabel('Frequency')
+        ax = ax.legend(['train', 'test'])
+
+    plt.show()
