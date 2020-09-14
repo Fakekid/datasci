@@ -1,17 +1,13 @@
-import pandas as pd
-import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold, GridSearchCV
-from sklearn import metrics
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, roc_auc_score, roc_curve, auc
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
+import pandas as pd
+import seaborn as sns
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
 import warnings
@@ -19,7 +15,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # 默认模型列表
-default_models = [('dt', {}), ('lr', {}), ('rfc', {'n_estimators': 80})]
+default_models = [('dt', {}), ('lr', {}), ('xgb', {})]
 
 # 模型简称与模型实体映射关系
 model_name_mapping = {
@@ -46,6 +42,7 @@ def select_best_model(models=[], X=None, y=None, scoring='roc_auc', cv=5, verbos
 
      Returns:
         返回最好的模型，模型评分结果集
+
      Owner:wangyue29
      """
     model_result = dict()
@@ -92,7 +89,8 @@ def grid_search_optimization(model, param_grid={}, X=None, y=None, scoring='roc_
     """
        模型优化-网格搜索
      Args:
-       models: 候选模型列表
+       model: 模型实例
+       param_grid: 模型参数
        X: 样本集
        y: 目标变量
        scoring: 评分函数，默认roc_auc
@@ -101,6 +99,7 @@ def grid_search_optimization(model, param_grid={}, X=None, y=None, scoring='roc_
 
      Returns:
         返回最好的模型，模型评分结果集
+
      Owner:wangyue29
      """
 
@@ -124,7 +123,20 @@ def grid_search_optimization(model, param_grid={}, X=None, y=None, scoring='roc_
     return parameters
 
 
-def feature_importances(model=None, X=None, thresholds=0.03, palette=None):
+def feature_importances(model=None, X=None, thresholds=0.01, palette=None):
+    """
+      模型输出特征重要性
+    Args:
+      model: 模型实例
+      X: 样本集
+      thresholds: 特征重要性阈值，默认是0.01
+      palette: 使用不同的调色板，默认是None
+
+    Returns:
+       返回特征重要性，按照降序排序
+
+    Owner:wangyue29
+    """
     importance_feature = list(zip(X.columns, model.feature_importances_))
     importance_feature = pd.DataFrame(importance_feature, columns=['feature_name', 'importances'])
 
@@ -137,23 +149,20 @@ def feature_importances(model=None, X=None, thresholds=0.03, palette=None):
     return importance_feature
 
 
-def evaluate(model=None, X=None, y=None):
-    pred_proba = model.predict_proba(X)[:, 1]
-    pred = model.predict(X)
-    evaluate_index = {}
-
-    evaluate_index['auc'] = '%.3f' % metrics.roc_auc_score(y, pred_proba)
-    evaluate_index['f1'] = '%.3f' % metrics.f1_score(y, pred)
-    evaluate_index['recall'] = '%.3f' % metrics.recall_score(y, pred)
-    evaluate_index['precision'] = '%.3f' % metrics.precision_score(y, pred)
-    evaluate_index['accuracy'] = '%.3f' % metrics.accuracy_score(y, pred)
-    evaluate_index['ture_rate'] = '%.3f' % (pred.sum() / pred.shape[0])
-    evaluate_index['positive'] = '%s' % (pred.sum())
-    #     print(metrics.classification_report(y,pred))
-    return evaluate_index
-
-
 def train(model_name='xgb', model_params={}, X=None, y=None):
+    """
+       构建训练模型
+     Args:
+       model_name: 模型名称，默认是xgb
+       model_params: 模型参数
+       X: 样本集
+       y: 目标变量
+
+     Returns:
+        返回训练后的模型实例
+
+     Owner:wangyue29
+     """
     clf = model_name_mapping[model_name]
 
     if 0 != len(model_params):

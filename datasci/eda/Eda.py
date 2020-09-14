@@ -54,6 +54,7 @@ def null_value_info(dataset, feature_names=[]):
 
      Returns:
         返回空值统计信息结果
+
      Owner:wangyue29
      """
 
@@ -75,6 +76,7 @@ def label_distribution(dataset, label='label'):
 
      Returns:
         返回正、负样本分布信息结果
+
      Owner:wangyue29
      """
     pos_size = dataset[label].sum()
@@ -91,9 +93,10 @@ def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=0
        hue: 在x或y标签划分的同时，再以hue标签划分统计个数
        f_rows: 图行数，默认值2
        f_cols: 图列数，默认值2
-       palette: 使用不同的调色板
+       palette: 使用不同的调色板，默认是None
      Returns:
         可视化呈现结果
+
      Owner:wangyue29
      """
 
@@ -129,6 +132,7 @@ def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=0, f_cols=2, 
        rotation:横坐标值旋转角度，默认是0
      Returns:
         可视化呈现结果
+
      Owner:wangyue29
      """
     if 0 == len(feature_names):
@@ -165,6 +169,7 @@ def plot_numberical_feature_dist_without_qq(dataset, kde=False, feature_names=[]
        rotation:横坐标值旋转角度，默认是0
      Returns:
         可视化呈现结果
+
      Owner:wangyue29
      """
 
@@ -188,6 +193,7 @@ def plot_numberical_feature_corr_heatmap(dataset, feature_names=[]):
        feature_names: a list value,默认可自动识别连续特征.
      Returns:
         可视化呈现结果
+
      Owner:wangyue29
     """
     if 0 == len(feature_names):
@@ -211,6 +217,7 @@ def plot_linear_reg_corr(dataset, feature_names=[], label='label', f_rows=0, f_c
        f_cols: 图列数，默认值2
      Returns:
         可视化呈现结果
+
      Owner:wangyue29
      """
 
