@@ -175,7 +175,7 @@ def train(estimator_name='XGB', estimator_params={}, X=None, y=None):
     estimator = estimator_name_mapping[estimator_name]
 
     if estimator is None:
-        print 'wrong estimator name!'
+        print ('wrong estimator name!')
 
     if 0 != len(estimator_params):
         estimator.set_params(**estimator_params)
