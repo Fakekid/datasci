@@ -240,7 +240,7 @@ def plot_linear_reg_corr(dataset, feature_names=[], target='label', f_rows=1, f_
 
         plt.title('variable=' + '{}'.format(feat_name))
         plt.xlabel('')
-        plt.ylabel(label)
+        plt.ylabel(target)
 
         idx += 1
         ax = plt.subplot(f_rows, f_cols, idx)
