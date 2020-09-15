@@ -1,31 +1,35 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
 
 import warnings
 
 warnings.filterwarnings("ignore")
 
 # 默认模型列表
-default_models = [('dt', {}), ('lr', {}), ('xgb', {})]
+default_models = [('LR', {}), ('XGB', {})]
 
 # 模型简称与模型实体映射关系
 model_name_mapping = {
-    'dt': DecisionTreeClassifier(random_state=42),
-    'lr': LogisticRegression(),
-    'rfc': RandomForestClassifier(random_state=42),
-    'svc': SVC(kernel='rbf', gamma='scale'),
-    'ada': AdaBoostClassifier(),
-    'gbc': GradientBoostingClassifier(),
-    "xgb": XGBClassifier()
+    'NB': MultinomialNB(alpha=0.01),
+    'DT': DecisionTreeClassifier(random_state=42),
+    'LR': LogisticRegression(penalty='l2'),
+    'KNN': KNeighborsClassifier(),
+    'RFC': RandomForestClassifier(random_state=42),
+    'SVC': SVC(kernel='rbf', gamma='scale'),
+    'ADA': AdaBoostClassifier(),
+    'GBDT': GradientBoostingClassifier(),
+    "XGB": XGBClassifier(),
+    "LGB": LGBMClassifier()
 }
 
 
@@ -38,7 +42,7 @@ def select_best_model(models=[], X=None, y=None, scoring='roc_auc', cv=5, verbos
        y: 目标变量
        scoring: 评分函数，默认roc_auc
        cv: 交叉验证，默认是5
-       verbose: 是否打印信息，默认不打印
+       verbose: 是否打印调试信息，默认不打印
 
      Returns:
         返回最好的模型，模型评分结果集
@@ -56,6 +60,10 @@ def select_best_model(models=[], X=None, y=None, scoring='roc_auc', cv=5, verbos
         model_name = model[0]
         model_params = model[1]
         clf = model_name_mapping[model_name]
+
+        if clf is None:
+            print 'wrong model name!'
+
         if 0 != len(model_params):
             print(model_params)
             clf.set_params(**model_params)
@@ -95,7 +103,7 @@ def grid_search_optimization(model, param_grid={}, X=None, y=None, scoring='roc_
        y: 目标变量
        scoring: 评分函数，默认roc_auc
        cv: 交叉验证，默认是5
-       verbose: 是否打印信息，默认不打印
+       verbose: 是否打印调试信息，默认不打印
 
      Returns:
         返回最好的模型，模型评分结果集
@@ -149,11 +157,11 @@ def feature_importances(model=None, X=None, thresholds=0.01, palette=None):
     return importance_feature
 
 
-def train(model_name='xgb', model_params={}, X=None, y=None):
+def train(model_name='XGB', model_params={}, X=None, y=None):
     """
        构建训练模型
      Args:
-       model_name: 模型名称，默认是xgb
+       model_name: 模型名称，默认是XGB
        model_params: 模型参数
        X: 样本集
        y: 目标变量
@@ -164,6 +172,9 @@ def train(model_name='xgb', model_params={}, X=None, y=None):
      Owner:wangyue29
      """
     clf = model_name_mapping[model_name]
+
+    if clf is None:
+        print 'wrong model name!'
 
     if 0 != len(model_params):
         clf.set_params(**model_params)
