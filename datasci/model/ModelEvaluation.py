@@ -129,7 +129,7 @@ def plot_validation_curve(estimator=None, X=None, y=None, param_name="gamma",
       estimator: 预估器实例
       X: 样本集
       y: 目标变量
-      param_name: 交叉样本量，默认gamma
+      param_name: 参数名称，默认gamma
       param_range: 训练样本比例，默认从0.0到1.01
       scoring: 评分函数，默认accuracy
       n_jobs: CPU并行核数，默认为1，-1的时候，表示cpu里的所有core进行工作
