@@ -1,9 +1,14 @@
+# coding:utf8
+
 import warnings
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from scipy import stats
+
+plt.rcParams['font.family'] = ['sans-serif']
+plt.rcParams['font.sans-serif'] = ['SimHei']
 
 warnings.filterwarnings("ignore")
 
@@ -121,7 +126,7 @@ def plot_categorical_feature_bar_chart(dataset, feature_names=[], hue=None, f_ro
     plt.show()
 
 
-def plot_numberical_feature_hist(dataset, feature_names=[], f_rows=1, f_cols=2, kde=True):
+def plot_numberical_feature_hist(dataset, feature_names=[], f_rows=1, f_cols=2, kde=True, rotation=30):
     """
        连续特征直方图可视化
      Args:
@@ -157,6 +162,7 @@ def plot_numberical_feature_hist(dataset, feature_names=[], f_rows=1, f_cols=2, 
         plt.title('skew=' + '{:.4f}'.format(stats.skew(dataset[feat_name])))
 
     plt.tight_layout()
+    plt.xticks(rotation=rotation)
     plt.show()
 
 
