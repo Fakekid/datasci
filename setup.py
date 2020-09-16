@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-inner_packages = find_packages(include=['datasci.data_loader.*', 'datasci.eda.*',
+inner_packages = find_packages(include=['datasci.loader.*', 'datasci.eda.*',
                                         'datasci.model.*', 'datasci.preprocesing.*'])
 setup(name='datasci',
       version='0.0.2',
@@ -12,10 +12,10 @@ setup(name='datasci',
       author_email='wangyue29@tal.com,lianxiaolei@tal.com',
       license='MIT',
       include_package_data=False,
-      packages=['datasci.data_loader',
+      packages=['datasci.loader',
                 'datasci.eda',
                 'datasci.model',
-                'datasci.preprocesing',
+                'datasci.preprocessing',
                 'datasci.constant'] + inner_packages,
       install_requires=[  # 依赖列表
         'pandas>=1.0.5',
