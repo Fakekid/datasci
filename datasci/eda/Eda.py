@@ -1,13 +1,14 @@
+import warnings
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from scipy import stats
-import warnings
 
 warnings.filterwarnings("ignore")
 
 
-def data_distirbution_info(dataset):
+def data_dist_info(dataset):
     """
        查看数据分布
      Args:
@@ -63,35 +64,35 @@ def null_value_info(dataset, feature_names=[]):
 
     for feat_name in feature_names:
         null_value = dataset[feat_name].isnull().sum()
-        null_value_ratio = null_value / dataset[feat_name].shape[0]
+        null_value_ratio = null_value * 1.0 / dataset[feat_name].shape[0]
         print ('特征名称:{},空值数:{},空值率:{:0.2f}'.format(feat_name, null_value, null_value_ratio))
 
 
-def label_distribution(dataset, label='label'):
+def target_dist_info(dataset, target='label'):
     """
        正、负样本分布信息统计
      Args:
        dataset: dataframe数据集
-       label: 目标变量label值
+       target: 目标变量target值,默认'label'
 
      Returns:
         返回正、负样本分布信息结果
 
      Owner:wangyue29
      """
-    pos_size = dataset[label].sum()
-    neg_size = dataset[label].shape[0] - pos_size
+    pos_size = dataset[target].sum()
+    neg_size = dataset[target].shape[0] - pos_size
     return '正样本数:{},负样本数:{},负样本数/正样本数:{:0.2f}'.format(pos_size, neg_size, pos_size / neg_size)
 
 
-def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=0, f_cols=2, palette=None):
+def plot_categorical_feature_bar_chart(dataset, feature_names=[], hue=None, f_rows=1, f_cols=2, palette=None):
     """
        离散特征条形图可视化
      Args:
        dataset: dataframe数据集
-       feature_names: a list value,默认可自动识别离散特征
+       feature_names: 特征名称列表，默认可自动识别离散特征
        hue: 在x或y标签划分的同时，再以hue标签划分统计个数
-       f_rows: 图行数，默认值2
+       f_rows: 图行数，默认值1
        f_cols: 图列数，默认值2
        palette: 使用不同的调色板，默认是None
      Returns:
@@ -103,7 +104,7 @@ def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=0
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['object', 'category', 'bool', 'string']).columns
 
-    if 0 == f_rows:
+    if 1 == f_rows and 0 != len(feature_names):
         f_rows = len(feature_names)
 
     plt.figure(figsize=(6 * f_cols, 6 * f_rows))
@@ -120,16 +121,15 @@ def plot_categorical_feature_count(dataset, feature_names=[], hue=None, f_rows=0
     plt.show()
 
 
-def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=0, f_cols=2, kde=True):
+def plot_numberical_feature_hist(dataset, feature_names=[], f_rows=1, f_cols=2, kde=True):
     """
        连续特征直方图可视化
      Args:
        dataset: dataframe数据集
-       feature_names: 特征名称,默认可自动识别连续特征
-       f_rows: 图行数，默认值2
+       feature_names: 特征名称列表,默认可自动识别连续特征
+       f_rows: 图行数，默认值1
        f_cols: 图列数，默认值2
        kde:KDE分布，默认值True
-       rotation:横坐标值旋转角度，默认是0
      Returns:
         可视化呈现结果
 
@@ -138,7 +138,7 @@ def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=0, f_cols=2, 
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
 
-    if 0 == f_rows:
+    if 1 == f_rows and 0 != len(feature_names):
         f_rows = len(feature_names)
 
     plt.figure(figsize=(6 * f_cols, 6 * f_rows))
@@ -160,12 +160,12 @@ def plot_numberical_feature_dist(dataset, feature_names=[], f_rows=0, f_cols=2, 
     plt.show()
 
 
-def plot_numberical_feature_dist_without_qq(dataset, kde=False, feature_names=[], rotation=0):
+def plot_numberical_feature_hist_without_qq_chart(dataset, kde=False, feature_names=[], rotation=0):
     """
-       连续特征直方图可视化
+       连续特征直方图可视化【无Q-Q图】
      Args:
        dataset: dataframe数据集
-       feature_names: a list value,默认可自动识别连续特征
+       feature_names: 特征名称列表，默认可自动识别连续特征
        rotation:横坐标值旋转角度，默认是0
      Returns:
         可视化呈现结果
@@ -174,7 +174,7 @@ def plot_numberical_feature_dist_without_qq(dataset, kde=False, feature_names=[]
      """
 
     def dist_plot(x, **kwargs):
-        sns.distplot(x, kde=kde);
+        sns.distplot(x, kde=kde)
         plt.xticks(rotation=0)
 
     if 0 == len(feature_names):
@@ -190,7 +190,7 @@ def plot_numberical_feature_corr_heatmap(dataset, feature_names=[]):
        连续特征相关热力图可视化
      Args:
        dataset: dataframe数据集
-       feature_names: a list value,默认可自动识别连续特征.
+       feature_names: 特征名称列表，默认可自动识别连续特征
      Returns:
         可视化呈现结果
 
@@ -207,13 +207,14 @@ def plot_numberical_feature_corr_heatmap(dataset, feature_names=[]):
                 linewidths=.5, annot_kws={'size': 12, 'weight': 'bold', 'color': 'blue'})
 
 
-def plot_linear_reg_corr(dataset, feature_names=[], label='label', f_rows=0, f_cols=2):
+def plot_linear_reg_corr(dataset, feature_names=[], target='label', f_rows=1, f_cols=2):
     """
        线性回归关系图可视化
      Args:
        dataset: dataframe数据集
        feature_names: 特征名称,默认可自动识别连续特征
-       f_rows: 图行数，默认值2
+       target: 目标变量target值,默认'label'
+       f_rows: 图行数，默认值1
        f_cols: 图列数，默认值2
      Returns:
         可视化呈现结果
@@ -224,7 +225,7 @@ def plot_linear_reg_corr(dataset, feature_names=[], label='label', f_rows=0, f_c
     if 0 == len(feature_names):
         feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
 
-    if 0 == f_rows:
+    if 1 == f_rows and 0 != len(feature_names):
         f_rows = len(feature_names)
 
     plt.figure(figsize=(6 * f_cols, 6 * f_rows))
@@ -233,13 +234,13 @@ def plot_linear_reg_corr(dataset, feature_names=[], label='label', f_rows=0, f_c
     for feat_name in feature_names:
         idx += 1
         ax = plt.subplot(f_rows, f_cols, idx)
-        sns.regplot(x=feat_name, y=label, data=dataset, ax=ax,
+        sns.regplot(x=feat_name, y=target, data=dataset, ax=ax,
                     scatter_kws={'marker': '.', 's': 3, 'alpha': 0.3},
-                    line_kws={'color': 'k'});
+                    line_kws={'color': 'k'})
 
         plt.title('variable=' + '{}'.format(feat_name))
         plt.xlabel('')
-        plt.ylabel(label)
+        plt.ylabel(target)
 
         idx += 1
         ax = plt.subplot(f_rows, f_cols, idx)
