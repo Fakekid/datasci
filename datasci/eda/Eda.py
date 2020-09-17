@@ -119,7 +119,7 @@ def plot_categorical_feature_bar_chart(dataset, feature_names=[], hue=None, f_ro
         idx += 1
         ax = plt.subplot(f_rows, f_cols, idx)
         sns.countplot(x=feat_name, hue=hue, data=dataset, palette=palette)
-        plt.title('variable=' + '{}'.format(feat_name))
+        plt.title('variable={}'.format(feat_name))
         plt.xlabel('')
 
     plt.tight_layout()
@@ -153,7 +153,7 @@ def plot_numberical_feature_hist(dataset, feature_names=[], f_rows=1, f_cols=2, 
         idx += 1
         ax = plt.subplot(f_rows, f_cols, idx)
         sns.distplot(dataset[feat_name], fit=stats.norm, kde=kde)
-        plt.title('variable=' + '{}'.format(feat_name))
+        plt.title('variable={}'.format(feat_name))
         plt.xlabel('')
 
         idx += 1
@@ -213,7 +213,7 @@ def plot_numberical_feature_corr_heatmap(dataset, feature_names=[]):
                 linewidths=.5, annot_kws={'size': 12, 'weight': 'bold', 'color': 'blue'})
 
 
-def plot_linear_reg_corr(dataset, feature_names=[], target='label', f_rows=1, f_cols=2):
+def plot_linear_reg_corr(dataset, feature_names=[], target='label', f_rows=1, f_cols=2, is_display_distplot=False):
     """
        线性回归关系图可视化
      Args:
@@ -248,7 +248,8 @@ def plot_linear_reg_corr(dataset, feature_names=[], target='label', f_rows=1, f_
         plt.xlabel('')
         plt.ylabel(target)
 
-        idx += 1
-        ax = plt.subplot(f_rows, f_cols, idx)
-        sns.distplot(dataset[feat_name].dropna())
-        plt.xlabel(feat_name)
+        if is_display_distplot:
+            idx += 1
+            ax = plt.subplot(f_rows, f_cols, idx)
+            sns.distplot(dataset[feat_name].dropna())
+            plt.xlabel(feat_name)

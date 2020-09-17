@@ -5,12 +5,14 @@ import warnings
 import pandas as pd
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
+from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+from skopt import BayesSearchCV  # pip install scikit-optimize
 from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
@@ -131,6 +133,41 @@ def grid_search_optimization(estimator, param_grid={}, X=None, y=None, scoring='
     return parameters
 
 
+def bayesian_search_optimization(estimator, param_grid={}, X=None, y=None, n_iter=30, verbose=0):
+    """
+       预估器优化-贝叶斯搜索
+     Args:
+       estimator: 预估器实例
+       param_grid: 预估器参数
+       X: 样本集
+       y: 目标变量
+       n_iter: 迭代次数，默认30次
+       verbose: 是否打印调试信息，默认不打印
+
+     Returns:
+        返回最好的预估器，预估器评分结果集
+
+     Owner:wangyue29
+     """
+
+    bayes = BayesSearchCV(estimator, param_grid, n_iter=n_iter, random_state=42, verbose=verbose)
+    bayes.fit(X, y)
+
+    # best parameter combination
+    parameters = bayes.best_params_
+
+    # all combinations of hyperparameters
+    bayes.cv_results_['params']
+
+    # average scores of cross-validation
+    bayes.cv_results_['mean_test_score']
+
+    print('Best score: {}'.format(bayes.best_score_))
+    print('Best parameters: {}'.format(bayes.best_params_))
+
+    return parameters
+
+
 def train(estimator_name='XGB', estimator_params={}, X=None, y=None):
     """
        训练预估器【支持分类、回归、聚类等】
@@ -157,3 +194,20 @@ def train(estimator_name='XGB', estimator_params={}, X=None, y=None):
     estimator.fit(X, y)
 
     return estimator
+
+
+def save(estimmator=None, filename=None, compress=3, protocol=None):
+    """
+       模型保存
+     Args:
+       estimator_name: 预估器名称
+       filename: 模型保存路径，文件格式支持‘.z’, ‘.gz’, ‘.bz2’, ‘.xz’ or ‘.lzma’
+       compress: 压缩数据等级，0-9，值越大，压缩效果越好，但会降低读写效率，默认建议是3
+       protocol: pickle protocol,
+
+     Returns:
+        返回存储数据文件列表
+    """
+    filenames = joblib.dump(estimmator, filename, compress, protocol)
+
+    return filenames
