@@ -335,7 +335,7 @@ def plot_numberical_feature_violin(dataset, target='label', feature_names=None, 
     :param scale: 测度小提琴图的宽度 默认'area' area-面积相同,count-按照样本数量决定宽度,width-宽度一样
     :param palette: 设置调色板 默认None
     :param gridsize: 设置小提琴图的平滑度，越高越平滑 默认100
-    :return:
+    :return:图像
     """
     if isinstance(feature_names, list) and is_label == 1:
         plot_num = int(len(feature_names))
@@ -356,3 +356,27 @@ def plot_numberical_feature_violin(dataset, target='label', feature_names=None, 
 
     else:
         return "请输入特征"
+
+
+def plot_numberical_feature_box(dataset, feature_names=None, target=None, width=5, height=5, box_width=0.2):
+    """
+
+    :param dataset:数据集
+    :param feature_names:
+    :param target:
+    :param width:
+    :param height:
+    :param box_width:
+    :return:图像
+    """
+    plt.figure(figsize=(width, height))
+    if isinstance(feature_names, list) and isinstance(target, str):
+        n = 0
+        for i in feature_names:
+            fig = plt.figure(num=n, figsize=(width, height))
+            sns.boxplot(x=target, y=i, data=dataset, width=box_width)
+            n += 1
+    elif isinstance(feature_names, list):
+        sns.boxplot(data=dataset[feature_names], width=box_width)
+    else:
+        sns.boxplot(x=target, y=feature_names, data=dataset, width=box_width)
