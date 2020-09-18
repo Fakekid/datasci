@@ -361,12 +361,12 @@ def plot_numberical_feature_violin(dataset, target='label', feature_names=None, 
 def plot_numberical_feature_box(dataset, feature_names=None, target=None, width=5, height=5, box_width=0.2):
     """
 
-    :param dataset:数据集
-    :param feature_names:
-    :param target:
-    :param width:
-    :param height:
-    :param box_width:
+    :param dataset: 数据集
+    :param feature_names: 特征列表or单特征
+    :param target: 类别变量or因变量
+    :param width: 图像宽度
+    :param height: 图像高度
+    :param box_width: 箱宽
     :return:图像
     """
     plt.figure(figsize=(width, height))
