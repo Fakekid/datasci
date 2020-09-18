@@ -345,7 +345,7 @@ def plot_numberical_feature_violin(dataset, target='label', feature_names=None, 
        palette: 设置调色板 默认None
        gridsize: 设置小提琴图的平滑度，越高越平滑 默认100
      Returns:
-        图像
+        小提琴图可视化呈现结果
 
      Owner:baijiaqi1
      """
@@ -372,15 +372,19 @@ def plot_numberical_feature_violin(dataset, target='label', feature_names=None, 
 
 def plot_numberical_feature_box(dataset, feature_names=None, target=None, width=5, height=5, box_width=0.2):
     """
+       绘制箱线图
+     Args:
+       dataset: 数据集
+       feature_names: 特征列表or单特征
+       target: 类别变量or因变量
+       width: 图像宽度
+       height: 图像高度
+       box_width: 箱宽
+     Returns:
+        箱线图可视化呈现结果
 
-    :param dataset: 数据集
-    :param feature_names: 特征列表or单特征
-    :param target: 类别变量or因变量
-    :param width: 图像宽度
-    :param height: 图像高度
-    :param box_width: 箱宽
-    :return:图像
-    """
+     Owner:yujie5
+     """
     plt.figure(figsize=(width, height))
     if isinstance(feature_names, list) and isinstance(target, str):
         n = 0
