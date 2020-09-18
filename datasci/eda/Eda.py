@@ -322,8 +322,6 @@ def plot_feature_target_relationship_chart(dataset, feature_name, target='label'
             df_all_group = dataset.groupby([df_tag_cut]).agg(
                 {target: [('用户量', lambda x: len(x)), ('转化量', lambda x: sum(x))]})
             df_all_group['转化率'] = df_all_group[target, '转化量'] / df_all_group[target, '用户量']
-    else:
-        return print('请选择特征类型')
 
     plot_figure_combination_chart(df_all_group.index.astype(str), [df_all_group[target, '用户量'], df_all_group['转化率']],
                                   ['转化率'], plot_color)
