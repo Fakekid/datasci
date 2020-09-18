@@ -253,3 +253,106 @@ def plot_linear_reg_corr(dataset, feature_names=[], target='label', f_rows=1, f_
             ax = plt.subplot(f_rows, f_cols, idx)
             sns.distplot(dataset[feat_name].dropna())
             plt.xlabel(feat_name)
+
+
+def plot_figure_combination_chart(x, y_list, y_name, color='pink'):
+    """
+    绘制柱状图与折线图 工具
+    :param x: x轴列表
+    :param y_list: y轴列表
+    :param y_name: y轴名称
+    :param color: 柱状图颜色 默认'pink'
+    :return: 图像
+    """
+    y1 = y_list[0]
+    plt.figure(figsize=(14, 7))
+    plt.bar(x, y1, color=color, alpha=0.8)
+    for a, b in zip(x, y1):
+        plt.text(a, b, '%.0f' % b, ha='center', va='bottom', fontsize=14)
+    plt.twinx()
+    for i in range(1, len(y_list)):
+        y = y_list[i]
+        label_name = y_name[i - 1]
+        plt.plot(x, y, alpha=1, marker='.', linewidth=2, label=label_name)
+        for a, b in zip(x, y):
+            plt.text(a, b, '%.1f' % (b * 100) + '%', ha='center', va='bottom', fontsize=14)
+    plt.legend(loc='best')
+    plt.ylim(bottom=0)
+    plt.title('特征用户量与转化率')
+    plt.xlabel("特征分段")
+    plt.ylabel("转化率")
+    plt.show()
+
+
+def plot_feature_target_relationship_chart(dataset, feature_name, target='label', feature_type='categorical', bins=None,
+                                           qcut=5, ascending=False, plot_color='pink'):
+    """
+    单特征与目标值关系图表
+    :param dataset: 数据集
+    :param feature_name: 列名
+    :param target: 目标值列名 默认 'label'
+    :param feature_type: categorical 离散 numberical 连续 默认'categorical'
+    :param bins: 自定义分箱方式 默认'None'
+    :param qcut: 等频分箱个数
+    :param ascending: 离散排序方式， 默认转化率降序
+    :param plot_color: 柱状图颜色，默认'pink'
+    :return: 单特征与目标值关系图表,与关系详情表
+    """
+    if feature_type == 'categorical':
+        df_all_group = dataset.groupby(feature_name).agg(
+            {target: [('用户量', lambda x: len(x)), ('转化量', lambda x: sum(x))]})
+        df_all_group['转化率'] = df_all_group[target, '转化量'] / df_all_group[target, '用户量']
+        df_all_group = df_all_group.sort_values(by='转化率', ascending=ascending)
+    elif feature_type == 'numberical':
+        if bins != None:
+            df_tag_cut = pd.cut(dataset[feature_name], bins=bins)
+            df_all_group = dataset.groupby([df_tag_cut]).agg(
+                {target: [('用户量', lambda x: len(x)), ('转化量', lambda x: sum(x))]})
+            df_all_group['转化率'] = df_all_group[target, '转化量'] / df_all_group[target, '用户量']
+        elif qcut != None:
+            df_tag_cut = pd.qcut(dataset[feature_name], q=qcut, duplicates="drop")
+            df_all_group = dataset.groupby([df_tag_cut]).agg(
+                {target: [('用户量', lambda x: len(x)), ('转化量', lambda x: sum(x))]})
+            df_all_group['转化率'] = df_all_group[target, '转化量'] / df_all_group[target, '用户量']
+    else:
+        return print('请选择特征类型')
+
+    plot_figure_combination_chart(df_all_group.index.astype(str), [df_all_group[target, '用户量'], df_all_group['转化率']],
+                                  ['转化率'], plot_color)
+    return df_all_group
+
+
+def plot_numberical_feature_violin(dataset, target='label', feature_names=None, is_label=1, x=None, y=None,
+                                   scale="area", palette=None, gridsize=100):
+    """
+    连续值绘制小提琴图
+    :param dataset: 数据集
+    :param target: 目标值
+    :param feature_names: 特征名列表
+    :param is_label: 是否基于label值绘制 1/0, 默认1
+    :param x:自定义小提琴x
+    :param y:自定义小提琴y
+    :param scale: 测度小提琴图的宽度 默认'area' area-面积相同,count-按照样本数量决定宽度,width-宽度一样
+    :param palette: 设置调色板 默认None
+    :param gridsize: 设置小提琴图的平滑度，越高越平滑 默认100
+    :return:
+    """
+    if isinstance(feature_names, list) and is_label == 1:
+        plot_num = int(len(feature_names))
+        fig, axes = plt.subplots(plot_num, 1)
+        index = 0
+        for i in feature_names:
+            sns.violinplot(y=i, x=target, data=dataset, scale=scale, palette=palette, gridsize=gridsize, ax=axes[index])
+            index += 1
+    elif isinstance(feature_names, list) and is_label != 1:
+        plot_num = int(len(feature_names))
+        fig, axes = plt.subplots(plot_num, 1)
+        index = 0
+        for i in feature_names:
+            sns.violinplot(y=i, data=dataset, scale=scale, palette=palette, gridsize=gridsize, ax=axes[index])
+            index += 1
+    elif x and y:
+        sns.violinplot(x=x, y=y, data=dataset, scale=scale, palette=palette, gridsize=gridsize)
+
+    else:
+        return "请输入特征"
