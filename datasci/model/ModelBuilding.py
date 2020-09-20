@@ -7,7 +7,7 @@ from lightgbm import LGBMClassifier
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV
+from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV,RandomizedSearchCV
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -124,13 +124,41 @@ def grid_search_optimization(estimator, param_grid={}, X=None, y=None, scoring='
         verbose=verbose)
 
     grid_search.fit(X, y)
-
     parameters = grid_search.best_params_
 
     print('Best score: {}'.format(grid_search.best_score_))
     print('Best parameters: {}'.format(grid_search.best_params_))
 
     return parameters
+
+
+
+def randomized_search_optimization(estimator, param_grid={}, X=None, y=None, n_iter=30, verbose=0):
+    """
+       预估器优化-随机搜索
+     Args:
+       estimator: 预估器实例
+       param_grid: 预估器参数
+       X: 样本集
+       y: 目标变量
+       n_iter: 迭代次数，默认30次
+       verbose: 是否打印调试信息，默认不打印
+
+     Returns:
+        返回最好的预估器，预估器评分结果集
+
+     Owner:wangyue29
+     """
+
+    randomized_search = RandomizedSearchCV(estimator, param_grid, n_iter=n_iter, random_state=42, verbose=verbose)
+    randomized_search.fit(X, y)
+    parameters = randomized_search.best_params_
+
+    print('Best score: {}'.format(randomized_search.best_score_))
+    print('Best parameters: {}'.format(randomized_search.best_params_))
+
+    return parameters
+
 
 
 def bayesian_search_optimization(estimator, param_grid={}, X=None, y=None, n_iter=30, verbose=0):
@@ -150,20 +178,12 @@ def bayesian_search_optimization(estimator, param_grid={}, X=None, y=None, n_ite
      Owner:wangyue29
      """
 
-    bayes = BayesSearchCV(estimator, param_grid, n_iter=n_iter, random_state=42, verbose=verbose)
-    bayes.fit(X, y)
+    bayes_search = BayesSearchCV(estimator, param_grid, n_iter=n_iter, random_state=42, verbose=verbose)
+    bayes_search.fit(X, y)
+    parameters = bayes_search.best_params_
 
-    # best parameter combination
-    parameters = bayes.best_params_
-
-    # all combinations of hyperparameters
-    bayes.cv_results_['params']
-
-    # average scores of cross-validation
-    bayes.cv_results_['mean_test_score']
-
-    print('Best score: {}'.format(bayes.best_score_))
-    print('Best parameters: {}'.format(bayes.best_params_))
+    print('Best score: {}'.format(bayes_search.best_score_))
+    print('Best parameters: {}'.format(bayes_search.best_params_))
 
     return parameters
 
