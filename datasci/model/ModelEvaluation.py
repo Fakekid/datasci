@@ -1,12 +1,122 @@
-import warnings
+# coding:utf8
 
-import numpy as np
+import warnings
+import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 from sklearn import metrics
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import learning_curve, ShuffleSplit, validation_curve
+import shap
+
+shap.initjs()
+
+plt.rcParams['font.family'] = ['sans-serif']
+plt.rcParams['font.sans-serif'] = ['SimHei']
 
 warnings.filterwarnings("ignore")
+
+
+def feature_importances(estimator=None, X=None, thresholds=0.01, palette=None):
+    """
+      预估器输出特征重要性
+    Args:
+      estimator: 预估器实例
+      X: 样本集
+      thresholds: 特征重要性阈值，默认是0.01
+      palette: 使用不同的调色板，默认是None
+
+    Returns:
+       返回特征重要性，按照降序排序
+
+    Owner:wangyue29
+    """
+    importance_feature = list(zip(X.columns, estimator.feature_importances_))
+    importance_feature = pd.DataFrame(importance_feature, columns=['feature_name', 'importances'])
+
+    importance_feature = importance_feature.loc[importance_feature['importances'] >= thresholds]
+    importance_feature = importance_feature.sort_values(by='importances', ascending=False)
+    sns.set_style("darkgrid")
+    sns.barplot(y='feature_name', x='importances', data=importance_feature, orient='h', palette=palette)
+    plt.show()
+
+    return importance_feature
+
+
+def feature_importances_shap(estimator=None, X=None, plot_type="bar"):
+    """
+      预估器通过SHAP框架输出特征重要性
+    Args:
+      estimator: 预估器实例
+      X: 样本集
+      plot_type: 绘制图表类型，默认是条形图
+
+    Returns:
+       返回特征重要性，按照降序排序
+
+    Owner:wangyue29
+    """
+    explainer = shap.TreeExplainer(estimator)
+    shap_values = explainer.shap_values(X)
+
+    shap.summary_plot(shap_values, X, plot_type=plot_type)
+
+
+def feature_shap_value(estimator=None, X=None, feature_names=[]):
+    """
+      每个特征的SHAP值
+    Args:
+      estimator: 预估器实例
+      X: 样本集
+      feature_names: 特征名称列表
+
+    Returns:
+       返回每个特征的SHAP值，按照降序排序
+
+    Owner:wangyue29
+    """
+    explainer = shap.TreeExplainer(estimator)
+    shap_values = explainer.shap_values(X)
+
+    if 0 == len(feature_names):
+        feature_names = X.columns
+
+    shap.summary_plot(shap_values, pd.DataFrame(X, columns=feature_names))
+
+
+def single_feature_explainer(estimator=None, X=None):
+    """
+     单特征的各自有其贡献
+   Args:
+     estimator: 预估器实例
+     X: 样本集
+
+   Returns:
+      返回单特征的贡献度
+
+   Owner:wangyue29
+   """
+    explainer = shap.TreeExplainer(estimator)
+    shap_values = explainer.shap_values(X)
+    shap.force_plot(explainer.expected_value, shap_values[0, :], X.iloc[0, :], matplotlib=True)
+
+
+def feature_interaction_value(estimator=None, X=None):
+    """
+     组合特征区分度
+   Args:
+     estimator: 预估器实例
+     X: 样本集
+
+   Returns:
+      返回组合特征可视化呈现
+
+   Owner:wangyue29
+   """
+    explainer = shap.TreeExplainer(estimator)
+    shap_interaction_values = explainer.shap_interaction_values(X)
+    shap.summary_plot(shap_interaction_values, X)
 
 
 def evaluate(estimator=None, X=None, y=None):
@@ -172,4 +282,42 @@ def plot_validation_curve(estimator=None, X=None, y=None, param_name="gamma",
                      test_scores_mean + test_scores_std, alpha=0.2,
                      color="navy", lw=lw)
     plt.legend(loc="best")
+    plt.show()
+
+
+def plot_train_test_dataset_feature_dist(X_train=None, X_test=None, feature_names=[], f_rows=1, f_cols=2):
+    """
+       训练集、测试集的特征分布可视化
+     Args:
+       X_train: 训练集
+       X_test: 测试集
+       feature_names: 特征名称,默认可自动识别连续特征
+       f_rows: 图行数，默认值1
+       f_cols: 图列数，默认值2
+     Returns:
+        可视化呈现结果
+
+     Owner:wangyue29
+     """
+
+    if 0 == len(feature_names):
+        feature_names = X_test.columns
+
+    if 1 == f_rows and 0 != len(feature_names):
+        f_rows = len(feature_names)
+
+    plt.figure(figsize=(6 * f_cols, 6 * f_rows))
+
+    idx = 0
+    for feat_name in feature_names:
+        idx += 1
+        ax = plt.subplot(f_rows, f_cols, idx)
+
+        ax = sns.kdeplot(X_train[feat_name], color='Red', shade=True)
+        ax = sns.kdeplot(X_test[feat_name], color='Green', shade=True)
+
+        ax.set_xlabel(feat_name)
+        ax.set_ylabel('Frequency')
+        ax = ax.legend(['train', 'test'])
+
     plt.show()

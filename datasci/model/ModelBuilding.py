@@ -1,16 +1,18 @@
+# coding:utf8
+
 import warnings
 
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
+from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+from skopt import BayesSearchCV  # pip install scikit-optimize
 from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
@@ -131,35 +133,44 @@ def grid_search_optimization(estimator, param_grid={}, X=None, y=None, scoring='
     return parameters
 
 
-def feature_importances(estimator=None, X=None, thresholds=0.01, palette=None):
+def bayesian_search_optimization(estimator, param_grid={}, X=None, y=None, n_iter=30, verbose=0):
     """
-      预估器输出特征重要性
-    Args:
-      estimator: 预估器实例
-      X: 样本集
-      thresholds: 特征重要性阈值，默认是0.01
-      palette: 使用不同的调色板，默认是None
+       预估器优化-贝叶斯搜索
+     Args:
+       estimator: 预估器实例
+       param_grid: 预估器参数
+       X: 样本集
+       y: 目标变量
+       n_iter: 迭代次数，默认30次
+       verbose: 是否打印调试信息，默认不打印
 
-    Returns:
-       返回特征重要性，按照降序排序
+     Returns:
+        返回最好的预估器，预估器评分结果集
 
-    Owner:wangyue29
-    """
-    importance_feature = list(zip(X.columns, estimator.feature_importances_))
-    importance_feature = pd.DataFrame(importance_feature, columns=['feature_name', 'importances'])
+     Owner:wangyue29
+     """
 
-    importance_feature = importance_feature.loc[importance_feature['importances'] >= thresholds]
-    importance_feature = importance_feature.sort_values(by='importances', ascending=False)
-    sns.set_style("darkgrid")
-    sns.barplot(y='feature_name', x='importances', data=importance_feature, orient='h', palette=palette)
-    plt.show()
+    bayes = BayesSearchCV(estimator, param_grid, n_iter=n_iter, random_state=42, verbose=verbose)
+    bayes.fit(X, y)
 
-    return importance_feature
+    # best parameter combination
+    parameters = bayes.best_params_
+
+    # all combinations of hyperparameters
+    bayes.cv_results_['params']
+
+    # average scores of cross-validation
+    bayes.cv_results_['mean_test_score']
+
+    print('Best score: {}'.format(bayes.best_score_))
+    print('Best parameters: {}'.format(bayes.best_params_))
+
+    return parameters
 
 
 def train(estimator_name='XGB', estimator_params={}, X=None, y=None):
     """
-       构建训练预估器
+       训练预估器【支持分类、回归、聚类等】
      Args:
        estimator_name: 预估器名称，默认是XGB
        estimator_params: 预估器参数
@@ -181,42 +192,22 @@ def train(estimator_name='XGB', estimator_params={}, X=None, y=None):
         estimator.set_params(**estimator_params)
 
     estimator.fit(X, y)
+
     return estimator
 
 
-def plot_train_test_dataset_feature_dist(X_train=None, X_test=None, feature_names=[], f_rows=1, f_cols=2):
+def save(estimmator=None, filename=None, compress=3, protocol=None):
     """
-       训练集、测试集的特征分布可视化
+       模型保存
      Args:
-       X_train: 训练集
-       X_test: 测试集
-       feature_names: 特征名称,默认可自动识别连续特征
-       f_rows: 图行数，默认值1
-       f_cols: 图列数，默认值2
+       estimator_name: 预估器名称
+       filename: 模型保存路径，文件格式支持‘.z’, ‘.gz’, ‘.bz2’, ‘.xz’ or ‘.lzma’
+       compress: 压缩数据等级，0-9，值越大，压缩效果越好，但会降低读写效率，默认建议是3
+       protocol: pickle protocol,
+
      Returns:
-        可视化呈现结果
+        返回存储数据文件列表
+    """
+    filenames = joblib.dump(estimmator, filename, compress, protocol)
 
-     Owner:wangyue29
-     """
-
-    if 0 == len(feature_names):
-        feature_names = X_test.columns
-
-    if 1 == f_rows and 0 != len(feature_names):
-        f_rows = len(feature_names)
-
-    plt.figure(figsize=(6 * f_cols, 6 * f_rows))
-
-    idx = 0
-    for feat_name in feature_names:
-        idx += 1
-        ax = plt.subplot(f_rows, f_cols, idx)
-
-        ax = sns.kdeplot(X_train[feat_name], color='Red', shade=True)
-        ax = sns.kdeplot(X_test[feat_name], color='Green', shade=True)
-
-        ax.set_xlabel(feat_name)
-        ax.set_ylabel('Frequency')
-        ax = ax.legend(['train', 'test'])
-
-    plt.show()
+    return filenames
