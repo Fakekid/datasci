@@ -145,8 +145,14 @@ def process_data(data, op_func, num_workers=1, **kwargs):
     Returns:
 
     """
-    func_kwargs = kwargs['func_kwargs']
-    is_tuple_data = kwargs['is_tuple_data']
+
+    def throw_error(e):
+        raise e
+
+    func_kwargs = kwargs.get('func_kwargs')
+    is_tuple_data = kwargs.get('is_tuple_data')
+    if func_kwargs is None:
+        func_kwargs = {}
     if num_workers < 2:
         data = op_func(data, **func_kwargs)
     else:
@@ -167,11 +173,6 @@ def process_data(data, op_func, num_workers=1, **kwargs):
         manager = multiprocessing.Manager()
         manager_dict = manager.dict()
 
-        # 暂时未使用
-        # if is_tuple_data:
-        #     data_col_nums = [item.shape[1] for item in data]
-        #     data = np.concatenate(data, axis=1)
-
         # 向进程池分发任务
         for idx in range(len(batch_idxs)):
             # 分批将数据放入不是进程
@@ -179,13 +180,28 @@ def process_data(data, op_func, num_workers=1, **kwargs):
                                  (idx, manager_dict,
                                   data[batch_idxs[idx]] if not is_tuple_data else [item[batch_idxs[idx]] for item in
                                                                                    data],
-                                  op_func, func_kwargs))
+                                  op_func, func_kwargs), error_callback=throw_error)
         pool.close()
         pool.join()
 
         data = []
+        seg_locale = [0]
+        subprocess_result = None
         for idx in range(len(batch_idxs)):
-            data.append(manager_dict.get(idx))
+            subprocess_result = manager_dict.get(idx)
+            # 判断返回的数据是否为tuple，如果是tuple，则系统默认其返回值是多个
+            if isinstance(subprocess_result, tuple):
+                if idx == 0:
+                    for item in subprocess_result[:-1]:
+                        seg_locale.append(item.shape[1] + seg_locale[-1])
+                    seg_locale = seg_locale[1:]
+
+                tmp_data = np.concatenate(subprocess_result, axis=1)
+            else:
+                tmp_data = subprocess_result
+            data.append(tmp_data)
         data = np.concatenate(data, axis=0)
 
+        if isinstance(subprocess_result, tuple):
+            data = np.split(data, seg_locale, axis=1)
     return data
