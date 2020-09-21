@@ -12,6 +12,7 @@ def dim_reduce(X, y=None, method='pca', n_components=2., pretrain_data=None, ret
         X: 需要降维的数据
         y: 标签数据
         method: 降维使用的方法
+            可选方法有：pca、truncated_svd、lda、tsne
         n_components: 目标维度
         pretrain_data: 预训练模型所使用的数据（非TSNE时使用）
         return_model: 是否返回模型（非TSNE时使用）
@@ -19,7 +20,8 @@ def dim_reduce(X, y=None, method='pca', n_components=2., pretrain_data=None, ret
         perplexity: 困惑度（仅TSNE时使用）
 
     Returns:
-
+        X：降维后的数据
+        model：降维算法被训练后的模型
     """
     model_dict = {
         'pca': PCA(n_components=n_components, copy=True),
