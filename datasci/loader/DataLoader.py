@@ -143,7 +143,7 @@ def process_data(data, op_func, num_workers=1, **kwargs):
         **kwargs: 其它参数
 
     Returns:
-
+        处理完成的数据
     """
 
     def throw_error(e):
@@ -211,12 +211,12 @@ def data_generator(data, batch_size=128, shuffle=False):
     """
         批数据生成器，用于批量返回数据。在程序中使用
     Args:
-        data:
-        batch_size:
-        shuffle:
+        data: ndarray类型，将要分批的数据
+        batch_size: 批大小
+        shuffle: 是否随机打乱
 
     Returns:
-
+        一个迭代器
     """
     is_tuple = False
     seg_locale = [0]
