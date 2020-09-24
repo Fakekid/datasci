@@ -241,11 +241,3 @@ def data_generator(data, batch_size=128, shuffle=False):
                 yield np.split(batch_data, seg_locale, axis=-1)
             else:
                 yield batch_data
-
-
-if __name__ == '__main__':
-    a = np.random.randn(10, 2)
-    b = np.random.randn(10, 3)
-    c = np.random.randn(10, 1)
-    loader = data_generator((a, b, c), batch_size=4)
-    print(next(loader))
