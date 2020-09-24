@@ -194,7 +194,7 @@ def process_data(data, op_func, num_workers=1, **kwargs):
                 if idx == 0:
                     for item in subprocess_result[:-1]:
                         seg_locale.append(item.shape[1] + seg_locale[-1])
-                    seg_locale = seg_locale[1:]
+                    seg_locale = seg_locale[1: -1]
 
                 tmp_data = np.concatenate(subprocess_result, axis=1)
             else:
@@ -205,3 +205,47 @@ def process_data(data, op_func, num_workers=1, **kwargs):
         if isinstance(subprocess_result, tuple):
             data = np.split(data, seg_locale, axis=1)
     return data
+
+
+def data_generator(data, batch_size=128, shuffle=False):
+    """
+        批数据生成器，用于批量返回数据。在程序中使用
+    Args:
+        data:
+        batch_size:
+        shuffle:
+
+    Returns:
+
+    """
+    is_tuple = False
+    seg_locale = [0]
+    if isinstance(data, tuple):
+        is_tuple = True
+        for item in data:
+            seg_locale.append(item.shape[1] + seg_locale[-1])
+        seg_locale = seg_locale[1: -1]
+        data = np.concatenate(data, axis=1)
+
+    while True:
+        if shuffle:
+            np.random.shuffle(data)
+
+        batch_num = len(data) / batch_size
+        if batch_num > int(batch_num):
+            batch_num += 1
+        for idx in range(int(batch_num)):
+            batch_data = data[int(idx * batch_size): int(min(len(data), (idx + 1) * batch_size))]
+            if is_tuple:
+                # 前面的操作会将tuple中所有的数据拼接，这里要进行split分开形成tuple
+                yield np.split(batch_data, seg_locale, axis=-1)
+            else:
+                yield batch_data
+
+
+if __name__ == '__main__':
+    a = np.random.randn(10, 2)
+    b = np.random.randn(10, 3)
+    c = np.random.randn(10, 1)
+    loader = data_generator((a, b, c), batch_size=4)
+    print(next(loader))
