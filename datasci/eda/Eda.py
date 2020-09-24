@@ -1,11 +1,12 @@
 # coding:utf8
 
 import warnings
-
+import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from scipy import stats
+from copy import deepcopy
 
 plt.rcParams['font.family'] = ['sans-serif']
 plt.rcParams['font.sans-serif'] = ['SimHei']
@@ -13,81 +14,132 @@ plt.rcParams['font.sans-serif'] = ['SimHei']
 warnings.filterwarnings("ignore")
 
 
-def data_dist_info(dataset):
+def data_dist_info(dataset, feature_names=None, show_only=False):
     """
        查看数据分布
+       Owner:wangyue29
      Args:
-       dataset: dataframe数据集
+       dataset: 用来被统计的数据集
+        feature_names: 特征名称，默认为None，即使用所有特征
+        show_only: 是否只展示结果
 
-     Returns:
-
-     Owner:wangyue29
+    Returns:
+        dict变量，统计的结果
+        若show_only=True，则不返回数据
      """
+    # 判断是否给定了列名称
+    if feature_names is not None:
+        if isinstance(feature_names, str):
+            feature_names = [feature_names]
 
-    print('--- 离散特征分布--- ')
-    categorical_feature_names = dataset.select_dtypes(include=['object', 'category', 'bool', 'string']).columns
-    for cat_fea in categorical_feature_names:
-        print(cat_fea + '的特征分布如下')
-        print('{}特征有个{}不同值'.format(cat_fea, dataset[cat_fea].nunique()))
-        print(dataset[cat_fea].value_counts() + '\n')
+        dataset = deepcopy(dataset)
+        dataset = dataset[feature_names]
 
-    print('\n')
+    categorical_feature_names = list(dataset.select_dtypes(include=['object', 'category', 'bool', 'string']).columns)
+    numberical_feature_names = list(dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns)
+    if not show_only:
+        cate_dict = {}
+        numb_dict = {}
+        # 统计离散特征的值分布情况
+        for cat_fea in categorical_feature_names:
+            cate_dict[cat_fea] = {k: v for k, v in zip(dataset[cat_fea].value_counts().index.to_list(),
+                                                       dataset[cat_fea].value_counts().to_list())}
+        # 统计数值特征的值分布情况
+        for num_fea in numberical_feature_names:
+            skew = dataset[num_fea].skew()
+            kurt = dataset[num_fea].skew()
+            numb_dict[num_fea] = {'skew': skew, 'kurt': kurt}
 
-    print('--- 连续特征分布--- ')
-    numberical_feature_names = dataset.select_dtypes(include=['int', 'int64', 'float', 'float64']).columns
-    for numberical_fea in numberical_feature_names:
-        print(numberical_fea + '的特征分布如下')
-        print('{:15}'.format(numberical_fea),
-              'Skewness:{:05.2f}'.format(dataset[numberical_fea].skew()),
-              '',
-              'Kurtosis:{:06.2f}'.format(dataset[numberical_fea].kurt())
-              )
+        # 将离散、连续特征存储到一个变量
+        data_dist_dict = dict()
+        data_dist_dict['categorical'] = cate_dict
+        data_dist_dict['numberical'] = numb_dict
+        return data_dist_dict
+    else:
+        print('--- 离散特征分布--- ')
+        for cat_fea in categorical_feature_names:
+            print(cat_fea + '的特征分布如下')
+            print('{}特征有个{}不同值'.format(cat_fea, dataset[cat_fea].nunique()))
+            print(dataset[cat_fea].value_counts() + '\n')
 
-    print('\n')
-    print('--- dataset describe ---')
-    print (dataset.describe())
-    print('\n')
-    print('--- dataset info ---')
-    print (dataset.info(), '\n')
+        print('\n')
+
+        print('--- 连续特征分布--- ')
+        for numberical_fea in numberical_feature_names:
+            print(numberical_fea + '的特征分布如下')
+            print('{:15}'.format(numberical_fea),
+                  'Skewness:{:05.2f}'.format(dataset[numberical_fea].skew()),
+                  '',
+                  'Kurtosis:{:06.2f}'.format(dataset[numberical_fea].kurt())
+                  )
+
+        print('\n')
+        print('--- dataset describe ---')
+        print(dataset.describe())
+        print('\n')
+        print('--- dataset info ---')
+        print(dataset.info(), '\n')
 
 
-def null_value_info(dataset, feature_names=[]):
+def null_value_info(dataset, feature_names=None, show_only=False):
     """
        空值数、率信息统计
      Args:
        dataset: dataframe数据集
-       feature_names: 特征名称列表，默认所有特征名称
+       feature_names: 特征名称列表，默认为False，即使用所有特征名称
+       show_only: 是否只展示数据，默认False
 
      Returns:
         返回空值统计信息结果
-
+        若show_only=True，则不返回数据
      Owner:wangyue29
      """
 
-    if 0 == len(feature_names):
+    if feature_names is None:
         feature_names = dataset.columns
+    elif isinstance(feature_names, str):
+        feature_names = [feature_names]
 
+    null_value_info_dict = dict()
     for feat_name in feature_names:
         null_value = dataset[feat_name].isnull().sum()
         null_value_ratio = null_value * 1.0 / dataset[feat_name].shape[0]
-        print ('特征名称:{},空值数:{},空值率:{:0.2f}'.format(feat_name, null_value, null_value_ratio))
+        if not show_only:
+            null_value_info_dict[feat_name] = {'count': null_value, 'ratio': null_value_ratio}
+        else:
+            print('特征名称:{},空值数:{},空值率:{:0.2f}'.format(feat_name, null_value, null_value_ratio))
+    if len(null_value_info_dict) > 0:
+        return null_value_info_dict
 
 
-def target_dist_info(dataset, target='label'):
+def target_dist_info(dataset, target='label', is_bin_cls=True, show_only=False):
     """
-       正、负样本分布信息统计
+       label分布信息统计
      Args:
        dataset: dataframe数据集
        target: 目标变量target值,默认'label'
+       is_bin_cls: 是否为二分类问题，如果为True则label为0或1，默认为False。
+       show_only: 是否只展示数据，默认False
 
      Returns:
         返回正、负样本分布信息结果
 
      Owner:wangyue29
      """
-    pos_size = dataset[target].sum()
-    neg_size = dataset[target].shape[0] - pos_size
-    return '正样本数:{},负样本数:{},负样本数/正样本数:{:0.2f}'.format(pos_size, neg_size, pos_size / neg_size)
+    if is_bin_cls:
+        pos_size = dataset[target].sum()
+        neg_size = dataset[target].shape[0] - pos_size
+        if not show_only:
+            return {0: neg_size, 1: pos_size}
+        else:
+            print('正样本数:{},负样本数:{},负样本数/正样本数:{:0.2f}'.format(pos_size, neg_size, pos_size / neg_size))
+    else:
+        label_dict = dict()
+        labels = dataset[target].nunique()
+        for label in labels:
+            label_dict[label] = np.sum(dataset[target] == label)
+
+        return label_dict
 
 
 def plot_categorical_feature_bar_chart(dataset, feature_names=[], hue=None, f_rows=1, f_cols=2, palette=None):
