@@ -7,13 +7,17 @@ from lightgbm import LGBMClassifier
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV,RandomizedSearchCV
+from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV, RandomizedSearchCV
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from skopt import BayesSearchCV  # pip install scikit-optimize
 from xgboost import XGBClassifier
+import os
+import numpy as np
+from sklearn import metrics
+from tqdm import tqdm, tqdm_notebook
 
 warnings.filterwarnings("ignore")
 
@@ -64,7 +68,7 @@ def select_best_estimator(estimators=[], X=None, y=None, scoring='roc_auc', cv=5
         estimator = estimator_name_mapping[estimator_name]
 
         if estimator is None:
-            print ('wrong estimator name!')
+            print('wrong estimator name!')
 
         if 0 != len(estimator_params):
             print(estimator_params)
@@ -132,7 +136,6 @@ def grid_search_optimization(estimator, param_grid={}, X=None, y=None, scoring='
     return parameters
 
 
-
 def randomized_search_optimization(estimator, param_grid={}, X=None, y=None, n_iter=30, verbose=0):
     """
        预估器优化-随机搜索
@@ -158,7 +161,6 @@ def randomized_search_optimization(estimator, param_grid={}, X=None, y=None, n_i
     print('Best parameters: {}'.format(randomized_search.best_params_))
 
     return parameters
-
 
 
 def bayesian_search_optimization(estimator, param_grid={}, X=None, y=None, n_iter=30, verbose=0):
@@ -206,13 +208,82 @@ def train(estimator_name='XGB', estimator_params={}, X=None, y=None):
     estimator = estimator_name_mapping[estimator_name]
 
     if estimator is None:
-        print ('wrong estimator name!')
+        print('wrong estimator name!')
 
     if 0 != len(estimator_params):
         estimator.set_params(**estimator_params)
 
     estimator.fit(X, y)
 
+    return estimator
+
+
+def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, estimator_name='XGB',
+                            estimator_params=None, eps=4, params_post_process_func=None,
+                            num_steps_per_epoch=128):
+    """
+        随机负采样模型训练，按比例对负样本进行随机采样，与正样本一起加入模型训练。
+        训练过程中，每个step均会去采样正例样本数*eps量的负样本，同时将模型的正例权重设为eps。
+    Args:
+        X:  ndarray对象，训练集特征
+        y:  ndarray对象，训练集标签
+        X_test:  ndarray对象，测试集特征，可以为空
+        y_test:  ndarray对象，测试集标签，可以为空
+        neg_lbl_value:  负标签值，默认为0
+        estimator_name:  str值，模型名称
+        estimator_params:  dict值，模型参数
+        eps:  采样比率，默认为4
+        params_post_process_func:  参数的后处理函数
+        num_steps_per_epoch:  int值，训练步数
+
+    Returns:
+        训练好的模型
+    """
+    if params_post_process_func is not None:
+        estimator_params = params_post_process_func(estimator_params)
+    estimator = estimator_name_mapping[estimator_name]
+
+    if estimator_params is not None:
+        estimator.set_params(**estimator_params)
+
+    X_pos = X[(y != neg_lbl_value).reshape(-1)]
+    X_neg = X[(y == neg_lbl_value).reshape(-1)]
+
+    y_pos = y[(y != neg_lbl_value).reshape(-1)]
+    y_neg = y[(y == neg_lbl_value).reshape(-1)]
+
+    if "JPY_PARENT_PID" in os.environ:
+        bar = tqdm_notebook(range(num_steps_per_epoch))
+    else:
+        bar = tqdm(range(num_steps_per_epoch))
+    aucs = []
+    recalls = []
+
+    for _ in bar:
+        idxs = np.random.choice(range(X_neg.shape[0]), int(X_pos.shape[0] * eps), replace=False)
+        X_neg_ = X_neg[idxs]
+        y_neg_ = y_neg[idxs]
+        X_ = np.concatenate([X_pos, X_neg_], axis=0)
+        y_ = np.concatenate([y_pos, y_neg_], axis=0)
+        Xy = np.concatenate([X_, y_], axis=1)
+        np.random.shuffle(Xy)
+        X_ = Xy[:, :-1]
+        y_ = Xy[:, -1:]
+
+        estimator.fit(X_, y_)
+
+        if X_test is not None and y_test is not None:
+            predict = estimator.predict(X_test)
+            aucs.append(metrics.roc_auc_score(y_test, predict))
+            recalls.append(metrics.recall_score(y_test, predict))
+            bar.set_description(
+                'best_recall:%.3f | best_auc:%.3f' % (np.max(recalls), np.max(aucs)))
+        else:
+            predict = estimator.predict(X)
+            aucs.append(metrics.roc_auc_score(y, predict))
+            recalls.append(metrics.recall_score(y, predict))
+            bar.set_description(
+                'best_recall:%.3f | best_auc:%.3f' % (np.max(recalls), np.max(aucs)))
     return estimator
 
 
