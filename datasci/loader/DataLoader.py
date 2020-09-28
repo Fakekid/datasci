@@ -9,7 +9,7 @@ from datasci.constant import VALUE_ERROR_VALUE_NOT_NONE_AT_SAME_TIME
 import multiprocessing
 
 
-def load_data_data(file_name, **kwargs):
+def load_txt_data(file_name, **kwargs):
     """
       Load data file.
     Args:
