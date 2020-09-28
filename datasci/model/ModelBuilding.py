@@ -15,6 +15,7 @@ from sklearn.tree import DecisionTreeClassifier
 from skopt import BayesSearchCV  # pip install scikit-optimize
 from xgboost import XGBClassifier
 import os
+import copy
 import numpy as np
 from sklearn import metrics
 from tqdm import tqdm, tqdm_notebook
@@ -220,10 +221,14 @@ def train(estimator_name='XGB', estimator_params={}, X=None, y=None):
 
 def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, estimator_name='XGB',
                             estimator_params=None, eps=4, params_post_process_func=None,
-                            num_steps_per_epoch=128):
+                            num_steps_per_epoch=128, metrics_weight=None, checkpoint=False,
+                            saved_model_name=None):
     """
         随机负采样模型训练，按比例对负样本进行随机采样，与正样本一起加入模型训练。
         训练过程中，每个step均会去采样正例样本数*eps量的负样本，同时将模型的正例权重设为eps。
+        评估指标为各个标准指标的加权平均，即auc、f1-score、recall、precision的加权结果，权重由用户指定。
+            如果想使用单个指标或者某些非全部指标的组合，则在指标权重字典参数中设置想参与计算的指标的权重，其它的不设置。例如：
+                metrics_weight={'auc':1.1,'recall':1}
     Args:
         X:  ndarray对象，训练集特征
         y:  ndarray对象，训练集标签
@@ -235,10 +240,31 @@ def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, est
         eps:  采样比率，默认为4
         params_post_process_func:  参数的后处理函数
         num_steps_per_epoch:  int值，训练步数
+        metrics_weight: dict对象，各个指标的自定义权重，用以评估最优模型
+        checkpoint: bool值，是否保存最优模型，默认False
+        saved_model_name: str值，保存模型文件的名称，默认为None
 
     Returns:
         训练好的模型
     """
+
+    def calc_score(y_, X_):
+        predict = estimator.predict_proba(X_)
+        pred_cate = np.argmax(predict, axis=1)
+
+        current_step_metrics = {'auc': metrics.roc_auc_score(y_, predict[:, 1]),
+                                'f1-score': metrics.f1_score(y_, pred_cate),
+                                'precision': metrics.precision_score(y_, pred_cate),
+                                'recall': metrics.recall_score(y_, pred_cate)}
+
+        if metrics_weight is None:
+            score = sum(current_step_metrics.values())
+        else:
+            score = 0
+            for k, v in current_step_metrics.items():
+                score += v * metrics_weight.get(k, 0)
+        return score, current_step_metrics
+
     if params_post_process_func is not None:
         estimator_params = params_post_process_func(estimator_params)
     estimator = estimator_name_mapping[estimator_name]
@@ -253,11 +279,12 @@ def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, est
     y_neg = y[(y == neg_lbl_value).reshape(-1)]
 
     if "JPY_PARENT_PID" in os.environ:
-        bar = tqdm_notebook(range(num_steps_per_epoch))
+        bar = tqdm_notebook(range(num_steps_per_epoch), ncols=700)
     else:
-        bar = tqdm(range(num_steps_per_epoch))
-    aucs = []
-    recalls = []
+        bar = tqdm(range(num_steps_per_epoch), ncols=700)
+
+    best_score = 0
+    best_metrics = None
 
     for _ in bar:
         idxs = np.random.choice(range(X_neg.shape[0]), int(X_pos.shape[0] * eps), replace=False)
@@ -273,17 +300,22 @@ def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, est
         estimator.fit(X_, y_)
 
         if X_test is not None and y_test is not None:
-            predict = estimator.predict_proba(X_test)
-            aucs.append(metrics.roc_auc_score(y_test, predict[:, 1]))
-            recalls.append(metrics.recall_score(y_test, np.argmax(predict, axis=1)))
-            bar.set_description(
-                'best_recall:%.3f | best_auc:%.3f' % (np.max(recalls), np.max(aucs)))
+            score, current_step_metrics = calc_score(y_test, X_test)
         else:
-            predict = estimator.predict(X)
-            aucs.append(metrics.roc_auc_score(y, predict))
-            recalls.append(metrics.recall_score(y, predict))
-            bar.set_description(
-                'best_recall:%.3f | best_auc:%.3f' % (np.max(recalls), np.max(aucs)))
+            score, current_step_metrics = calc_score(y, X)
+
+        if score > best_score:
+            best_score = score
+            best_metrics = current_step_metrics
+            if checkpoint:
+                if saved_model_name is None:
+                    saved_model_name = estimator_name + '.bin'
+                estimator.save_model(saved_model_name)
+
+        bar.set_description(
+            'f1-score:%.3f | auc:%.3f | r:%.3f | p:%.3f' % (best_metrics['f1-score'], best_metrics['auc'],
+                                                            best_metrics['recall'], best_metrics['precision']))
+
     return estimator
 
 
