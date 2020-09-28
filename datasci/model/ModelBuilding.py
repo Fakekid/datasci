@@ -273,9 +273,9 @@ def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, est
         estimator.fit(X_, y_)
 
         if X_test is not None and y_test is not None:
-            predict = estimator.predict(X_test)
-            aucs.append(metrics.roc_auc_score(y_test, predict))
-            recalls.append(metrics.recall_score(y_test, predict))
+            predict = estimator.predict_proba(X_test)
+            aucs.append(metrics.roc_auc_score(y_test, predict[:, 1]))
+            recalls.append(metrics.recall_score(y_test, np.argmax(predict, axis=1)))
             bar.set_description(
                 'best_recall:%.3f | best_auc:%.3f' % (np.max(recalls), np.max(aucs)))
         else:
