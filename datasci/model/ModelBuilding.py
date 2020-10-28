@@ -14,6 +14,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from skopt import BayesSearchCV  # pip install scikit-optimize
 from xgboost import XGBClassifier
+import xgboost as xgb
 import os
 import copy
 import numpy as np
@@ -248,7 +249,7 @@ def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, est
         训练好的模型
     """
 
-    def calc_score(y_, X_):
+    def calc_score(y_, X_, estimator):
         predict = estimator.predict_proba(X_)
         pred_cate = np.argmax(predict, axis=1)
 
@@ -267,7 +268,11 @@ def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, est
 
     if params_post_process_func is not None:
         estimator_params = params_post_process_func(estimator_params)
-    estimator = estimator_name_mapping[estimator_name]
+
+    if estimator_name != 'XGB0.7':
+        estimator = estimator_name_mapping[estimator_name]
+    else:
+        estimator = xgb
 
     if estimator_params is not None:
         estimator.set_params(**estimator_params)
@@ -297,20 +302,34 @@ def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, est
         X_ = Xy[:, :-1]
         y_ = Xy[:, -1:]
 
-        estimator.fit(X_, y_)
+        if estimator_name != 'XGB0.7':
+            estimator.fit(X_, y_)
 
-        if X_test is not None and y_test is not None:
-            score, current_step_metrics = calc_score(y_test, X_test)
+            if X_test is not None and y_test is not None:
+                score, current_step_metrics = calc_score(y_test, X_test, estimator)
+            else:
+                score, current_step_metrics = calc_score(y, X, estimator)
+
+            if score > best_score:
+                best_score = score
+                best_metrics = current_step_metrics
+                if checkpoint:
+                    if saved_model_name is None:
+                        saved_model_name = estimator_name + '.bin'
+                    estimator.save_model(saved_model_name)
         else:
-            score, current_step_metrics = calc_score(y, X)
+            model = estimator.train(estimator_params, xgb.DMatrix(data=X_, label=y_),
+                                    evals=(xgb.DMatrix(data=X_test, label=y_test)))
 
-        if score > best_score:
-            best_score = score
-            best_metrics = current_step_metrics
-            if checkpoint:
-                if saved_model_name is None:
-                    saved_model_name = estimator_name + '.bin'
-                estimator.save_model(saved_model_name)
+            score, current_step_metrics = calc_score(y_test, X_test, model)
+
+            if score > best_score:
+                best_score = score
+                best_metrics = current_step_metrics
+                if checkpoint:
+                    if saved_model_name is None:
+                        saved_model_name = estimator_name + '.bin'
+                    model.save_model(saved_model_name)
 
         bar.set_description(
             'f1-score:%.3f | auc:%.3f | r:%.3f | p:%.3f' % (best_metrics['f1-score'], best_metrics['auc'],
