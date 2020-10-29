@@ -75,12 +75,13 @@ class MySQLDao(Dao):
         except:
             return False
 
-    def execute_sql_with_pandas(self, sql, wanna_cols=None, return_series=False, verbose=True):
+    def load_mysql_data_df(self, sql, wanna_cols=None, return_series=False, verbose=True):
         """
         Execute sql and return fixed result.
         Args:
           sql: a sql with type `str`
           wanna_cols: list of columns which you wanna preserve.
+          return_series:
           verbose: bool value, whether print sql.
 
         Returns:
