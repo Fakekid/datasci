@@ -3,9 +3,10 @@
 from setuptools import setup, find_packages
 
 inner_packages = find_packages(include=['datasci.loader.*', 'datasci.eda.*',
-                                        'datasci.model.*', 'datasci.preprocesing.*'])
+                                        'datasci.model.*', 'datasci.preprocesing.*',
+                                        'datasci.dao.*'])
 setup(name='datasci',
-      version='0.0.6',
+      version='0.0.7',
       description='TAL WangXiao Data Science Toolkit',
       url='',
       author='wangyue,lianxiaolei',
@@ -16,7 +17,8 @@ setup(name='datasci',
                 'datasci.eda',
                 'datasci.model',
                 'datasci.preprocessing',
-                'datasci.constant'] + inner_packages,
+                'datasci.constant',
+                'datasci.dao'] + inner_packages,
       install_requires=[  # 依赖列表
         'pandas>=1.0.5',
         'pymysql>=0.10.0',
