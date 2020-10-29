@@ -271,11 +271,12 @@ def train_random_neg_sample(X, y, X_test=None, y_test=None, neg_lbl_value=0, est
 
     if estimator_name != 'XGB0.7':
         estimator = estimator_name_mapping[estimator_name]
+        if estimator_params is not None:
+            estimator.set_params(**estimator_params)
     else:
         estimator = xgb
-
-    if estimator_params is not None:
-        estimator.set_params(**estimator_params)
+        if estimator_params is not None:
+            estimator.Booster.set_param(**estimator_params)
 
     X_pos = X[(y != neg_lbl_value).reshape(-1)]
     X_neg = X[(y == neg_lbl_value).reshape(-1)]
