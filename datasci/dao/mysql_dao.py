@@ -173,13 +173,15 @@ class MySQLDao(Dao):
             print(traceback.format_stack())
         return False
 
-    def insert_data(self, table_name, cols, values, update_col_when_duplicate=None):
+    def insert_data(self, table_name, cols, values, update_col_when_duplicate=None, duplicate_col_op=''):
         """
 
         Args:
           table_name:
           cols:
           values:
+          update_col_when_duplicate:
+          duplicate_col_op:
 
         Returns:
 
@@ -202,7 +204,7 @@ class MySQLDao(Dao):
         # sql = 'replace into {} (id,字段1) values (1,'2'),(2,'3'),...(x,'y');'
         if update_col_when_duplicate is not None:
             update_col_when_duplicate = update_col_when_duplicate.split(',')
-            duplicate_update_str_list = ['`{}` = values(`{}`)'.format(item, item) for item in update_col_when_duplicate]
+            duplicate_update_str_list = ['`{}` = values(`{}`) {}'.format(item, item, duplicate_col_op) for item in update_col_when_duplicate]
             duplicate_update_str = ', '.join(duplicate_update_str_list)
             sql = 'insert into {} ({}) values {} on duplicate key update {};'.format(
                 table_name, ','.join(cols), values_str, duplicate_update_str)
