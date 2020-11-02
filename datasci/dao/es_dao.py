@@ -1,5 +1,6 @@
 # coding:utf8
 
+from elasticsearch.helpers import scan
 from elasticsearch import Elasticsearch
 from dao.bean.es_conf import ESConf
 from constant import VALUE_TYPE_ERROR_TIPS
@@ -70,8 +71,38 @@ class ESDao(Dao):
         """
         self.connector.index(index=index, doc_type=doc_type, id=doc_id, body=body)
 
-    def query(self):
-        pass
+    def query(self, index_name, condition_attr_name, condition_attr_value, condition_type='match_phrase',
+              request_timeout=None, raise_on_error=False):
+        """
+        Query the data according to the given conditions
+        Args:
+            index_name:  str value, es index name
+            condition_attr_name:  list value, condition attributes
+            condition_attr_value:  list value, condition value for given condition attributes
+            condition_type:  str value, condition's type, default 'match_phrase'
+            request_timeout:  int value, max time waiting
+            raise_on_error:  whether raise exception if error, default False
+
+        Returns:
+            eligible data
+        """
+        must_conditions = list()
+        assert isinstance(condition_attr_name, (list, str)), ValueError('the data type is abnormal')
+        for name, value in zip(condition_attr_name, condition_attr_value):
+            must_conditions.append({condition_type: {name: value}})
+
+        q_str = {
+            "query": {
+                "bool": {
+                    "must": must_conditions
+                }
+            }
+        }
+
+        result = scan(self.connector, query=q_str, index=index_name,
+                      request_timeout=request_timeout, raise_on_error=raise_on_error)
+
+        return result
 
     @property
     def conf(self):
