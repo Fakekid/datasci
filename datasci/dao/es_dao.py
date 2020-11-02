@@ -71,14 +71,14 @@ class ESDao(Dao):
         """
         self.connector.index(index=index, doc_type=doc_type, id=doc_id, body=body)
 
-    def query(self, index_name, condition_attr_name, condition_attr_value, condition_type='match_phrase',
+    def query(self, index_name, condition_attr_names, condition_attr_values, condition_type='match_phrase',
               request_timeout=None, raise_on_error=False):
         """
         Query the data according to the given conditions
         Args:
             index_name:  str value, es index name
-            condition_attr_name:  list value, condition attributes
-            condition_attr_value:  list value, condition value for given condition attributes
+            condition_attr_names:  list value, condition attributes
+            condition_attr_values:  list value, condition value for given condition attributes
             condition_type:  str value, condition's type, default 'match_phrase'
             request_timeout:  int value, max time waiting
             raise_on_error:  whether raise exception if error, default False
@@ -87,8 +87,8 @@ class ESDao(Dao):
             eligible data
         """
         must_conditions = list()
-        assert isinstance(condition_attr_name, (list, str)), ValueError('the data type is abnormal')
-        for name, value in zip(condition_attr_name, condition_attr_value):
+        assert isinstance(condition_attr_names, (list, str)), ValueError('the data type is abnormal')
+        for name, value in zip(condition_attr_names, condition_attr_values):
             must_conditions.append({condition_type: {name: value}})
 
         q_str = {
