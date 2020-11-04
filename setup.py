@@ -6,7 +6,7 @@ inner_packages = find_packages(include=['datasci.loader.*', 'datasci.eda.*',
                                         'datasci.model.*', 'datasci.preprocesing.*',
                                         'datasci.dao.*'])
 setup(name='datasci',
-      version='0.0.7',
+      version='0.0.8',
       description='TAL WangXiao Data Science Toolkit',
       url='',
       author='wangyue,lianxiaolei',

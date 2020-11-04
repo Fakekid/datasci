@@ -1,8 +1,8 @@
-from dao.bean.mysql_conf import MySQLConf
-from constant import VALUE_TYPE_ERROR_TIPS
+from ..dao.bean.mysql_conf import MySQLConf
+from ..constant import VALUE_TYPE_ERROR_TIPS
 import pymysql
 import pandas as pd
-from dao import Dao
+from ..dao import Dao
 from sqlalchemy import create_engine
 import itertools
 import traceback
@@ -203,9 +203,18 @@ class MySQLDao(Dao):
         # generate sql
         # sql = 'replace into {} (id,字段1) values (1,'2'),(2,'3'),...(x,'y');'
         if update_col_when_duplicate is not None:
-            update_col_when_duplicate = update_col_when_duplicate.split(',')
-            duplicate_update_str_list = ['`{}` = values(`{}`) {}'.format(item, item, duplicate_col_op) for item in update_col_when_duplicate]
+            if isinstance(update_col_when_duplicate, str):
+                update_col_when_duplicate = update_col_when_duplicate.split(',')
+
+            # duplicate_update_str_list = ['`{}` = values(`{}`) {}'.format(item, item, duplicate_col_op[idx]) for
+            #                              idx, item in enumerate(update_col_when_duplicate)]
+            duplicate_update_str_list = [
+                '`{}` = values(`{}`) {}'.format(item, item, duplicate_col_op[idx].split('|')[1]) \
+                    if duplicate_col_op[idx].split('|')[0] != 'origin' \
+                    else '`{}` = `{}` {}'.format(item, item, duplicate_col_op[idx].split('|')[1]) for
+                idx, item in enumerate(update_col_when_duplicate)]
             duplicate_update_str = ', '.join(duplicate_update_str_list)
+
             sql = 'insert into {} ({}) values {} on duplicate key update {};'.format(
                 table_name, ','.join(cols), values_str, duplicate_update_str)
             # sql = 'insert into {} ({}) values {} on duplicate key update `{}` = values(`{}`);'.format(
@@ -213,13 +222,8 @@ class MySQLDao(Dao):
         else:
             sql = 'insert into {} ({}) values {} ;'.format(
                 table_name, ','.join(cols), values_str)
-        try:
-            connector.execute(sql)
-            return True
-        except ValueError as error:
-            # todo write log
-            pass
-        return False
+
+        connector.execute(sql)
 
     def execute_sql(self, sql):
         """
@@ -237,6 +241,37 @@ class MySQLDao(Dao):
         cursor.close()
         self.connector.close()
         return results
+
+    def execute_sql_with_pandas(self, sql, wanna_cols=None, return_series=False, verbose=True):
+        """
+        Execute sql and return fixed result.
+        Args:
+          sql: a sql with type `str`
+          wanna_cols: list of columns which you wanna preserve.
+          verbose: bool value, whether print sql.
+
+        Returns:
+          data with type `pd.DataFrame`
+        """
+        if not self.is_connected():
+            self.reconnect()
+        if verbose:
+            print('{}\n{}\n{}'.format('=' * 40, sql, '=' * 40))
+        execute_result = pd.read_sql(sql, con=self.connector)
+        self.connector.close()
+
+        if wanna_cols is not None:
+            if isinstance(wanna_cols, (list, tuple, set)):
+                if len(wanna_cols) == 1 and return_series:
+                    return execute_result[wanna_cols[0]]
+                else:
+                    return execute_result[wanna_cols]
+            elif isinstance(wanna_cols, str):
+                return execute_result[wanna_cols]
+            else:
+                raise ValueError(VALUE_TYPE_ERROR_TIPS)
+        else:
+            return execute_result
 
     def insert_data_with_sql(self, sql, data):
         """

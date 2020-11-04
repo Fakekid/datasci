@@ -2,10 +2,10 @@
 
 from elasticsearch.helpers import scan
 from elasticsearch import Elasticsearch
-from dao.bean.es_conf import ESConf
-from constant import VALUE_TYPE_ERROR_TIPS
+from ..dao.bean.es_conf import ESConf
+from ..constant import VALUE_TYPE_ERROR_TIPS
 from elasticsearch import helpers
-from dao import Dao
+from ..dao import Dao
 
 
 class ESDao(Dao):
