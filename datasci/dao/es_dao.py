@@ -102,7 +102,7 @@ class ESDao(Dao):
         result = scan(self.connector, query=q_str, index=index_name,
                       request_timeout=request_timeout, raise_on_error=raise_on_error)
 
-        return result['_source']
+        return [item['_source'] for item in result]
 
     @property
     def conf(self):
