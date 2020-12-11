@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from sklearn import metrics
-from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import learning_curve, ShuffleSplit, validation_curve
+from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score, roc_curve, auc
+from sklearn.preprocessing import label_binarize
 import shap
 
 shap.initjs()
@@ -144,6 +145,25 @@ def evaluate(estimator=None, X=None, y=None):
     evaluate_index['positive'] = '%s' % (pred.sum())
     #     print(metrics.classification_report(y,pred))
     return evaluate_index
+
+
+def multi_cls_metrics(logits, labels, average='macro'):
+    all_labels = [x for x in range(logits.shape[1])]
+    preds = np.argmax(logits, axis=-1)
+    labels_onehot = label_binarize(labels, all_labels)
+
+    acc = np.mean(preds == labels)
+
+    f1 = f1_score(labels, preds, average=average)
+
+    try:
+        auc = roc_auc_score(y_true=labels_onehot, y_score=logits, average=average)
+    except ValueError as e:
+        auc = -1
+
+    p = precision_score(labels, preds, labels=all_labels[1:], average=average, zero_division=0)
+    r = recall_score(labels, preds, labels=all_labels[1:], average=average, zero_division=0)
+    return {'auc': auc, 'acc': acc, 'f1': f1, 'p': p, 'r': r}
 
 
 def roc(estimator=None, X=None, y=None):
