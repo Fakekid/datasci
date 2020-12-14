@@ -7,7 +7,7 @@ import torch
 from torch.optim import *
 from tensorboardX import SummaryWriter
 import torch.distributed as dist
-from .metrics import cls_metrics
+from ...ModelEvaluation import cls_metrics
 
 opti_dict = {'Adam': Adam, 'SGD': SGD, 'Adadelta': Adadelta, 'Adagrad': Adagrad, 'RMSprop': RMSprop, 'LBFGS': LBFGS}
 
@@ -107,7 +107,13 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
             loss.backward()
             optimizer.step()
 
-            # train_batch_acc = acc(labels, logits, mask=attention_mask, data_on_gpu=bool(cudas))
+            if bool(cudas):
+                labels = labels.cpu().numpy()
+                logits = logits.detach().cpu().numpy()
+            else:
+                labels = labels.numpy()
+                logits = logits.detach().numpy()
+
             metrics_dic = cls_metrics(labels, logits, mask=attention_mask, data_on_gpu=bool(cudas))
             acc, p, r, auc, f1 = \
                 metrics_dic['acc'], metrics_dic['p'], metrics_dic['r'], metrics_dic['auc'], metrics_dic['f1']
@@ -145,6 +151,13 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
                 logits, labels = get_model_unfolded_outputs(
                     test_batch, model, mode='test', label_field_name=label_field_name)
                 # test_batch_acc = acc(labels=labels, logits=logits, mask=attention_mask, data_on_gpu=bool(cudas))
+                if bool(cudas):
+                    labels = labels.cpu().numpy()
+                    logits = logits.detach().cpu().numpy()
+                else:
+                    labels = labels.numpy()
+                    logits = logits.detach().numpy()
+
                 metrics_dic = cls_metrics(labels, logits, mask=attention_mask, data_on_gpu=bool(cudas))
                 acc, p, r, auc, f1 = \
                     metrics_dic['acc'], metrics_dic['p'], metrics_dic['r'], metrics_dic['auc'], metrics_dic['f1']
