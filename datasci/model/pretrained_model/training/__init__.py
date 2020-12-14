@@ -114,7 +114,7 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
                 labels = labels.numpy()
                 logits = logits.detach().numpy()
 
-            metrics_dic = cls_metrics(labels, logits, mask=attention_mask, data_on_gpu=bool(cudas))
+            metrics_dic = cls_metrics(labels, logits)
             acc, p, r, auc, f1 = \
                 metrics_dic['acc'], metrics_dic['p'], metrics_dic['r'], metrics_dic['auc'], metrics_dic['f1']
 
@@ -158,7 +158,7 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
                     labels = labels.numpy()
                     logits = logits.detach().numpy()
 
-                metrics_dic = cls_metrics(labels, logits, mask=attention_mask, data_on_gpu=bool(cudas))
+                metrics_dic = cls_metrics(labels, logits)
                 acc, p, r, auc, f1 = \
                     metrics_dic['acc'], metrics_dic['p'], metrics_dic['r'], metrics_dic['auc'], metrics_dic['f1']
                 accu_acc += acc
