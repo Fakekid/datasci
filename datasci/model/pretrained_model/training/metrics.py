@@ -5,33 +5,6 @@ from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_sco
 from sklearn.preprocessing import label_binarize
 
 
-def acc(labels, logits, mask=None, data_on_gpu=True):
-    """
-
-    Args:
-        labels:
-        logits:
-        mask:
-        data_on_gpu:
-
-    Returns:
-
-    """
-    if data_on_gpu:
-        labels_ = labels.cpu().numpy()
-        logits_ = logits.detach().cpu().numpy()
-    else:
-        labels_ = labels.numpy()
-        logits_ = logits.detach().numpy()
-
-    if len(logits_.shape) < 3:
-        acc = np.mean(np.argmax(logits_, axis=-1) == labels_)
-    else:
-        acc = np.sum((np.argmax(logits_, axis=-1) == labels_) * mask.numpy()) / np.sum(mask.numpy())
-
-    return acc
-
-
 def cls_metrics(labels, logits, mask=None, data_on_gpu=True, return_dict=True):
     if data_on_gpu:
         labels = labels.cpu().numpy()

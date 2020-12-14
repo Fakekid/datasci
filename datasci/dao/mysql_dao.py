@@ -123,6 +123,7 @@ class MySQLDao(Dao):
         connector = engine.connect()
         dataframe.to_sql(name=table_name, con=connector, if_exists=if_exists, index=index)
         connector.close()
+        # done.
 
     def update_data(self, table_name, condition_cols, condition_values, target_cols, target_values, verbose=True):
         """
@@ -160,18 +161,13 @@ class MySQLDao(Dao):
                     [[k, "'%s'" % v if isinstance(v, str) else v] for k, v in
                      zip_condition])))
         # execute sql
-        try:
-            if verbose:
-                print('{}\n{}\n{}'.format('=' * 40, sql.split(';'), '=' * 40))
-            for s in sql.split(';'):
-                if len(s.strip()) > 0:
-                    print('current running:', s)
-                    connector.execute(s)
-            return True
-        except ValueError as error:
-            # todo write log
-            print(traceback.format_stack())
-        return False
+        if verbose:
+            print('{}\n{}\n{}'.format('=' * 40, sql.split(';'), '=' * 40))
+        for s in sql.split(';'):
+            if len(s.strip()) > 0:
+                print('current running:', s)
+                connector.execute(s)
+        # done.
 
     def insert_data(self, table_name, cols, values, update_col_when_duplicate=None, duplicate_col_op=''):
         """
