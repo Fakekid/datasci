@@ -169,7 +169,7 @@ class MySQLDao(Dao):
                 connector.execute(s)
         # done.
 
-    def insert_data(self, table_name, cols, values, update_col_when_duplicate=None, duplicate_col_op=''):
+    def insert_data(self, table_name, cols, values, update_col_when_duplicate=None, duplicate_col_op=None):
         """
 
         Args:
@@ -201,6 +201,10 @@ class MySQLDao(Dao):
         if update_col_when_duplicate is not None:
             if isinstance(update_col_when_duplicate, str):
                 update_col_when_duplicate = update_col_when_duplicate.split(',')
+
+        if duplicate_col_op is not None:
+            if isinstance(duplicate_col_op, str):
+                duplicate_col_op = duplicate_col_op.split(',')
 
             # duplicate_update_str_list = ['`{}` = values(`{}`) {}'.format(item, item, duplicate_col_op[idx]) for
             #                              idx, item in enumerate(update_col_when_duplicate)]
