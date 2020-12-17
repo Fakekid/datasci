@@ -120,69 +120,45 @@ def feature_interaction_value(estimator=None, X=None):
     shap.summary_plot(shap_interaction_values, X)
 
 
-def evaluate(estimator=None, X=None, y=None):
+def evaluate(estimator=None, X=None, y=None, logits=None, average='macro'):
     """
-      模型评估
+
     Args:
-      estimator: 预估器实例
-      X: 样本集
-      y: 目标变量
+        estimator: 预估器实例
+        X: 样本集
+        y: 目标变量
+        logits: 模型输出的概率
+        average: average类型，macro和micro，默认macro
+
     Returns:
-       返回预估器评估指标字典
+        返回预估器评估指标字典
 
     Owner:wangyue29
     """
-    pred_proba = estimator.predict_proba(X)[:, 1]
-    pred = estimator.predict(X)
-    evaluate_index = {}
+    assert estimator is not None or logits is not None, ValueError('estimator和logits不能同时为空')
+    assert y is not None, ValueError('y不能为空')
+    assert logits is None and X is not None, ValueError('当logits为空时X不能为空')
 
-    evaluate_index['auc'] = '%.3f' % metrics.roc_auc_score(y, pred_proba)
-    evaluate_index['f1'] = '%.3f' % metrics.f1_score(y, pred)
-    evaluate_index['recall'] = '%.3f' % metrics.recall_score(y, pred)
-    evaluate_index['precision'] = '%.3f' % metrics.precision_score(y, pred)
-    evaluate_index['accuracy'] = '%.3f' % metrics.accuracy_score(y, pred)
-    evaluate_index['ture_rate'] = '%.3f' % (pred.sum() / pred.shape[0])
-    evaluate_index['positive'] = '%s' % (pred.sum())
-    #     print(metrics.classification_report(y,pred))
-    return evaluate_index
-
-
-def cls_metrics(labels, logits, average='macro', return_dict=True):
-    """
-    分类模型评估
-    Args:
-        labels: 标签列表
-        logits: 模型输出概率列表
-        average: 评估方式，包含'micro'和'macro'，默认为'macro'
-        return_dict: 是否返回dict格式，默认为True
-
-    Returns:
-        返回各指标的评估结果
-    """
-    all_labels = [x for x in range(logits.shape[-1])]
-    preds = np.argmax(logits, axis=-1)
-    labels_onehot = label_binarize(labels, all_labels)
-
-    acc = np.mean(preds == labels)
-
-    p = precision_score(y_true=labels, y_pred=preds, average=average, zero_division=0)
-    r = recall_score(y_true=labels, y_pred=preds, average=average, zero_division=0)
-
-    try:
-        auc = roc_auc_score(y_true=labels_onehot, y_score=logits, average=average)
-    except ValueError as e:
-        auc = -1
-        # print(e)
-
-    f1 = f1_score(y_true=labels, y_pred=preds, average=average)
-
-    if return_dict:
-        return {'acc': acc, 'p': p, 'r': r, 'auc': auc, 'f1': f1}
+    if estimator is not None:
+        pred_proba = estimator.predict_proba(X)[:, 1]
+        pred = estimator.predict(X)
     else:
-        return acc, p, r, auc, f1
+        pred_proba = logits[:, 1]
+        pred = np.argmax(logits, axis=-1)
+
+    evaluate_dict = {}
+    evaluate_dict['auc'] = '%.3f' % metrics.roc_auc_score(y, pred_proba, average=average)
+    evaluate_dict['f1'] = '%.3f' % metrics.f1_score(y, pred, average=average)
+    evaluate_dict['recall'] = '%.3f' % metrics.recall_score(y, pred, average=average)
+    evaluate_dict['precision'] = '%.3f' % metrics.precision_score(y, pred, average=average)
+    evaluate_dict['accuracy'] = '%.3f' % metrics.accuracy_score(y, pred)
+    evaluate_dict['ture_rate'] = '%.3f' % (pred.sum() / pred.shape[0])
+    evaluate_dict['positive'] = '%s' % pred.sum()
+
+    return evaluate_dict
 
 
-def cls_metrics_seq(labels, logits, mask=None, average='macro', return_dict=True):
+def evaluate_seq(labels, logits, mask=None, average='macro', return_dict=True):
     """
         序列token级别分类模型评估
         Args:
