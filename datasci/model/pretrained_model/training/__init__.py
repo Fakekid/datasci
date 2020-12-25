@@ -7,49 +7,10 @@ import torch
 from torch.optim import *
 from tensorboardX import SummaryWriter
 import torch.distributed as dist
-from ...ModelEvaluation import cls_metrics
+from ...ModelEvaluation import evaluate
+from ..module import get_model_outputs
 
 opti_dict = {'Adam': Adam, 'SGD': SGD, 'Adadelta': Adadelta, 'Adagrad': Adagrad, 'RMSprop': RMSprop, 'LBFGS': LBFGS}
-
-
-def get_model_unfolded_outputs(data_batch, model, mode='train', label_field_name='label'):
-    """
-
-    Args:
-        data_batch:
-        model:
-        mode:
-        label_field_name:
-
-    Returns:
-
-    """
-    cudas = torch.cuda.device_count()
-    if cudas > 0:
-        torch.cuda.empty_cache()
-
-    if isinstance(data_batch, dict):
-        items = {var_name: var_value.cuda() if cudas > 0 else var_value for var_name, var_value in
-                 data_batch.items()}
-        # items = {var_name: var_value for var_name, var_value in data_batch.items()}
-
-        outputs = model(**items)
-        logits = outputs.logits
-        if mode == 'infer':
-            return logits
-        elif mode == 'test':
-            labels = data_batch[label_field_name]
-            return logits, labels
-
-        loss = outputs.loss
-        labels = data_batch[label_field_name]
-    else:
-        items = [t.cuda() if cudas > 0 else t for t in data_batch]
-        outputs = model(*items)
-        logits, loss = outputs
-        labels = data_batch[-1]
-
-    return logits, loss, labels
 
 
 def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=16,
@@ -68,6 +29,7 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
         summary_path:
         label_field_name:
         mask_field_name:
+        model_saved_path:
 
     Returns:
 
@@ -98,7 +60,7 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
             # clear all weight's gradient
             optimizer.zero_grad()
             # get model's output, including
-            logits, loss, labels = get_model_unfolded_outputs(
+            logits, loss, labels = get_model_outputs(
                 train_batch, model, mode='train', label_field_name=label_field_name)
 
             loss = torch.mean(loss)
@@ -114,7 +76,7 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
                 labels = labels.numpy()
                 logits = logits.detach().numpy()
 
-            metrics_dic = cls_metrics(labels, logits)
+            metrics_dic = evaluate(labels, logits)
             acc, p, r, auc, f1 = \
                 metrics_dic['acc'], metrics_dic['p'], metrics_dic['r'], metrics_dic['auc'], metrics_dic['f1']
 
@@ -148,7 +110,7 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
                 attention_mask = test_batch[1]
 
             with torch.no_grad():
-                logits, labels = get_model_unfolded_outputs(
+                logits, labels = get_model_outputs(
                     test_batch, model, mode='test', label_field_name=label_field_name)
                 # test_batch_acc = acc(labels=labels, logits=logits, mask=attention_mask, data_on_gpu=bool(cudas))
                 if bool(cudas):
@@ -158,7 +120,7 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
                     labels = labels.numpy()
                     logits = logits.detach().numpy()
 
-                metrics_dic = cls_metrics(labels, logits)
+                metrics_dic = evaluate(labels, logits)
                 acc, p, r, auc, f1 = \
                     metrics_dic['acc'], metrics_dic['p'], metrics_dic['r'], metrics_dic['auc'], metrics_dic['f1']
                 accu_acc += acc

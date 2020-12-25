@@ -71,8 +71,8 @@ class ESDao(Dao):
         """
         self.connector.index(index=index, doc_type=doc_type, id=doc_id, body=body)
 
-    def query(self, index_name, condition_attr_names, condition_attr_values, condition_type='match_phrase',
-              request_timeout=None, raise_on_error=False):
+    def query(self, index_name, condition_attr_names=None, condition_attr_values=None, condition_type='match_phrase',
+              udc=None, request_timeout=None, raise_on_error=False):
         """
         Query the data according to the given conditions
         Args:
@@ -80,6 +80,7 @@ class ESDao(Dao):
             condition_attr_names:  list value, condition attributes
             condition_attr_values:  list value, condition value for given condition attributes
             condition_type:  str value, condition's type, default 'match_phrase'
+            udc: dict value, user defined condition
             request_timeout:  int value, max time waiting
             raise_on_error:  whether raise exception if error, default False
 
@@ -87,17 +88,21 @@ class ESDao(Dao):
             eligible data
         """
         must_conditions = list()
-        assert isinstance(condition_attr_names, (list, str)), ValueError('the data type is abnormal')
-        for name, value in zip(condition_attr_names, condition_attr_values):
-            must_conditions.append({condition_type: {name: value}})
 
-        q_str = {
-            "query": {
-                "bool": {
-                    "must": must_conditions
+        if udc is not None:
+            q_str = {
+                "query": udc
+            }
+        else:
+            for name, value in zip(condition_attr_names, condition_attr_values):
+                must_conditions.append({condition_type: {name: value}})
+            q_str = {
+                "query": {
+                    "bool": {
+                        "must": must_conditions
+                    }
                 }
             }
-        }
 
         result = scan(self.connector, query=q_str, index=index_name,
                       request_timeout=request_timeout, raise_on_error=raise_on_error)

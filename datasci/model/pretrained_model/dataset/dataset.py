@@ -24,7 +24,7 @@ class TextSequenceDataset(Dataset):
         self.y_post_func = y_post_func
 
     def __len__(self):
-        return len(self.y)
+        return len(self.X)
 
     def __getitem__(self, idx):
         sample = dict()
@@ -49,7 +49,7 @@ class TextSequenceDataset(Dataset):
         return sample
 
 
-def create_mini_batch(samples, return_dict=True):
+def create_mini_batch(samples, return_dict=True, mode='train'):
     """
 
     Args:
@@ -65,8 +65,12 @@ def create_mini_batch(samples, return_dict=True):
     attention_mask = torch.zeros(input_ids.shape, dtype=torch.long)
     attention_mask = attention_mask.masked_fill(input_ids != 0, 1)
 
-    label = [s['label'] for s in samples]
+    if mode == 'infer':
+        if return_dict:
+            return {'input_ids': input_ids, 'attention_mask': attention_mask}
+        return input_ids, attention_mask
 
+    label = [s['label'] for s in samples]
     if return_dict:
         return {'input_ids': input_ids, 'attention_mask': attention_mask,
                 'labels': torch.tensor(label)}
