@@ -1,3 +1,4 @@
+import logging
 import time
 import os
 from datasci.workflow.config.task_config import get_config
@@ -12,7 +13,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import threading
 
-log = get_stream_logger("TrainProcesser")
+log = get_stream_logger("TrainProcesser",  level=logging.INFO)
 
 threadLock = threading.Lock()
 threads = []
@@ -39,8 +40,7 @@ class MultiTrainThread(threading.Thread):
 
 
 class TrainProcesser(object):
-    def __init__(self, config=None, config_file=None, fconfig=None, fconfig_file=None, encoder_map=None,
-                 encoder_map_file=None, model_map=None, model_map_file=None, multi_process=False):
+    def __init__(self, config=None, fconfig=None, encoder_map=None, model_map=None, multi_process=False):
         """
             A packaging of train
 
@@ -69,14 +69,14 @@ class TrainProcesser(object):
             -------
             None
         """
-        self.jobs = get_config(type="job", config=config, file_config=config_file)
-        log.info("Job config is : %s" % self.jobs)
-        self.encoders = get_config(type="encoder", config=encoder_map, file_config=encoder_map_file)
-        log.info("Encoder config is : %s" % self.jobs)
-        self.features = get_config(type="feature", config=fconfig, file_config=fconfig_file)
-        log.info("Feature config is : %s" % self.features)
-        self.models = get_config(type="model", config=model_map, file_config=model_map_file)
-        log.info("Model config is : %s" % self.models)
+        self.jobs = get_config(config_type="job", config=config)
+        log.debug("Job config is : %s" % self.jobs)
+        self.encoders = get_config(config_type="encoder", config=encoder_map)
+        log.debug("Encoder config is : %s" % self.jobs)
+        self.features = get_config(config_type="feature", config=fconfig)
+        log.debug("Feature config is : %s" % self.features)
+        self.models = get_config(config_type="model", config=model_map)
+        log.debug("Model config is : %s" % self.models)
         paths = self.jobs.get('paths')
         self.project_path = paths.get('project_path')
         check_path(self.project_path)
@@ -113,7 +113,8 @@ class TrainProcesser(object):
         need_train = model_config.get('train').get('need_train', False)
         if need_train:
             # Feature args
-            feature_process = GroupFeatureProcesser(config=self.features.get(model_name).get('feature_process'), encoder_map=self.encoders)
+            feature_process = GroupFeatureProcesser(config=self.features.get(model_name).get('feature_process'),
+                                                    encoder_map=self.encoders)
             # data args
             model_input_config = model_config.get('input').get('train_data')
             # evaluate args
@@ -212,7 +213,7 @@ class TrainProcesser(object):
                 feature_process_file = os.path.join(feature_process_path, file_name)
                 GroupFeatureProcesser.write_feature_processer(feature_process, feature_process_file)
                 log.info('Model %s Saved group feature process in dir : %s' % (
-                train_package.model_name, feature_process_file))
+                    train_package.model_name, feature_process_file))
             pre_model = None
             for i in range(len(X_train_datas)):
                 log.info('Training data batch %s ... ' % i)
@@ -243,7 +244,7 @@ class TrainProcesser(object):
                 feature_process_file = os.path.join(fp_sub_path, file_name)
                 GroupFeatureProcesser.write_feature_processer(feature_process, feature_process_file)
                 log.info('Model %s Saved group feature process in dir : %s' % (
-                train_package.model_name, feature_process_file))
+                    train_package.model_name, feature_process_file))
 
             # Training ... ...
             X_val = fpr.transform(X_val)

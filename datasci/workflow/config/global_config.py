@@ -1,8 +1,9 @@
+import logging
 import os
 from datasci.utils.mylog import get_file_logger, get_stream_logger
 from datasci.utils.path_check import check_path
 
-log = get_stream_logger("global_config")
+log = get_stream_logger("global_config", level=logging.INFO)
 
 PROJECT_PATH = os.getcwd()
 config_dir = os.path.join(PROJECT_PATH, "conf")
@@ -23,4 +24,4 @@ global_config = {
     "log_path": log_dir,
     "data_path": data_dir
 }
-log.info("Global config : %s" % global_config)
+log.debug("Global config : %s" % global_config)

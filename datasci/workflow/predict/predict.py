@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+import logging
 import os
 from collections import Iterable
 import time
@@ -19,7 +20,7 @@ pd.set_option('display.max_columns', None)
 # 显示所有行
 pd.set_option('display.max_rows', None)
 
-log = get_stream_logger('PredictProcesser')
+log = get_stream_logger('PredictProcesser', level=logging.INFO)
 threadLock = threading.Lock()
 threads = []
 
@@ -45,7 +46,7 @@ class MultiPredictThread(threading.Thread):
 
 class PredictProcesser(object):
 
-    def __init__(self, config=None, config_file=None, model_map=None, model_map_file=None, multi_process=False):
+    def __init__(self, config=None, model_map=None, multi_process=False):
         """
             A packaging of predict process
 
@@ -59,10 +60,10 @@ class PredictProcesser(object):
             -------
             None
         """
-        self.jobs = get_config(type="job", config=config, file_config=config_file)
-        log.info("Job config is : %s" % self.jobs)
-        self.models = get_config(type="model", config=model_map, file_config=model_map_file)
-        log.info("Model config is : %s" % self.models)
+        self.jobs = get_config(config_type="job", config=config)
+        log.debug("Job config is : %s" % self.jobs)
+        self.models = get_config(config_type="model", config=model_map)
+        log.debug("Model config is : %s" % self.models)
         self.output = self.jobs.get('output')
         self.join_key = self.output.get('join_key')
 
