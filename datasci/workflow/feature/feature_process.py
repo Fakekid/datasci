@@ -2,8 +2,8 @@
 import shelve
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import ColumnTransformer
-from datasci.preprocessing.encoders.tal_feature_group import FeaturePackage
-from datasci.preprocessing.encoders.encoder_map import get_encoder
+from datasci.workflow.feature.tal_feature_group import FeaturePackage
+from datasci.workflow.feature.encoder_map import get_encoder
 import pandas as pd
 import collections
 

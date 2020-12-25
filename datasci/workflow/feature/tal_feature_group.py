@@ -1,7 +1,7 @@
 
 import pandas as pd
-from datasci.preprocessing.encoders.encoder_map import get_encoder
-from datasci.preprocessing.encoders.column import column_change
+from datasci.workflow.feature.encoder_map import get_encoder
+from datasci.workflow.feature.column import column_change
 import numpy as np
 import shelve
 import collections

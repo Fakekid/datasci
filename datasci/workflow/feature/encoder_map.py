@@ -1,6 +1,5 @@
 from datasci.utils.reflection import Reflection
 
-
 def get_encoder(encoder_name, config=None):
     """
         Select encoder from encoder name
