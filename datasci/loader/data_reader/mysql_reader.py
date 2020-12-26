@@ -1,12 +1,11 @@
 # -*- coding:utf8 -*-
-from datasci.loader.data_reader.DataReader import DataReader
 from datasci.utils.mylog import get_stream_logger
 from sqlalchemy import create_engine
 import pandas as pd
 import time
 
 
-class MySQLDataReader(DataReader):
+class MySQLDataReader(object):
     """
         Mysql data reader (a Iterator)
     """
@@ -20,7 +19,7 @@ class MySQLDataReader(DataReader):
                  sql='',
                  func=None,
                  batch_output = False,
-                 log=get_stream_logger('MySQLDataReader')
+                 log=None
                  ):
         self.engine = engine
         self.sql = sql
@@ -28,7 +27,8 @@ class MySQLDataReader(DataReader):
         self.offset = offset
         self.max_iter = max_iter
         self.func = func
-        self.log = log if log else get_stream_logger('MySQLDataReader')
+        from datasci.workflow.config.log_config import log_level
+        self.log = get_stream_logger("DATA_READER", level=log_level) if log is None else log
         self.batch_output = batch_output
 
     def __iter__(self):

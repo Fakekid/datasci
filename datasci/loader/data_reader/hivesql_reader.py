@@ -1,5 +1,4 @@
 # -*- coding:utf8 -*-
-from datasci.loader.data_reader.datareader import DataReader
 from datasci.utils.mylog import get_stream_logger
 from pyspark.sql import SparkSession
 
@@ -18,26 +17,31 @@ def get_host_and_ip():
     except Exception as e:
         raise e
         # return "unknown_host", "0.0.0.0"
-hostname, ip=get_host_and_ip()
 
-class HiveSQLDataReader(DataReader):
+
+hostname, ip = get_host_and_ip()
+
+
+class HiveSQLDataReader(object):
     """
         Hive data Reader
     """
+
     def __init__(self,
                  batch_size=1000000,
                  offset=0,
                  max_iter=10,
                  sql='',
                  func=None,
-                 log=get_stream_logger('HiveSQLDataReader')
+                 log=None
                  ):
         self.sql = sql
         self.batch_size = batch_size
         self.offset = offset
         self.max_iter = max_iter
         self.func = func
-        self.log = log if log else get_stream_logger('HiveSQLDataReader')
+        from datasci.workflow.config.log_config import log_level
+        self.log = get_stream_logger("DATA_READER", level=log_level) if log is None else log
 
         builder = SparkSession.builder
         # 队列要切换成事业部自己的队列

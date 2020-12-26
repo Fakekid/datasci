@@ -1,11 +1,7 @@
 # -*- coding:utf-8 -*-
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from datasci.workflow.config.global_config import global_config
 import configparser
 import platform
-
+from datasci.workflow.config.global_config import global_config
 
 # 全局参数变化获取
 def get_global_config(section,options):

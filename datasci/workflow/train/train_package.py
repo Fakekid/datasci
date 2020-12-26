@@ -15,7 +15,7 @@ pd.set_option('display.max_rows', None)
 
 
 class TrainPackage(object):
-    def __init__(self, model_name, model_type,  model_version, model_map=None):
+    def __init__(self, model_name, model_type,  model_version, model_map=None, log=None):
         """
             A package of predict
 
@@ -35,6 +35,8 @@ class TrainPackage(object):
             -------
             None
         """
+        from datasci.workflow.config.log_config import log_level
+        self.log = get_stream_logger("TRAIN", level=log_level) if log is None else log
         self.model_name = model_name
         self.model_version = model_version
         self.model_type = model_type

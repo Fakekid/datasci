@@ -4,6 +4,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.compose import ColumnTransformer
 from datasci.workflow.feature.tal_feature_group import FeaturePackage
 from datasci.workflow.feature.encoder_map import get_encoder
+from datasci.utils.mylog import get_stream_logger
 import pandas as pd
 import collections
 
@@ -14,7 +15,7 @@ pd.set_option('display.max_rows', None)
 
 
 class GroupFeatureProcesser(object):
-    def __init__(self, process_mode='FeatureGroup', config=None, encoder_map=None):
+    def __init__(self, process_mode='FeatureGroup', config=None, encoder_map=None, log=None):
         """
             Args
             -------
@@ -72,7 +73,8 @@ class GroupFeatureProcesser(object):
         if encoder_map is None:
             print("Encoder Map config must not None!")
             exit(0)
-
+        from datasci.workflow.config.log_config import log_level
+        self.log = get_stream_logger("FEATURE", level=log_level) if log is None else log
         self.simple_feature = config.get('simple', None)
         self.process_dag = config.get('process_dag', None)
 
@@ -171,6 +173,7 @@ class GroupFeatureProcesser(object):
             Feature process package
                 which is decided by self.process_mode
         """
+        result = None
         if self.process_mode == 'Pipeline':
             pipe_list = list()
             if self.process_config == '':
@@ -187,7 +190,7 @@ class GroupFeatureProcesser(object):
         if self.process_mode == 'FeatureGroup':
             if self.process_config == '':
                 return None
-            result = FeaturePackage(init_config=self.process_config, order=self.process_dag, encoder_map=self.encoders)
+            result = FeaturePackage(init_config=self.process_config, order=self.process_dag, encoder_map=self.encoders, log=self.log)
         self.feature_package = result
         return result
 

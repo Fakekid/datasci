@@ -20,14 +20,14 @@ pd.set_option('display.max_columns', None)
 # 显示所有行
 pd.set_option('display.max_rows', None)
 
-log = get_stream_logger('PredictProcesser', level=logging.INFO)
 threadLock = threading.Lock()
 threads = []
 
 class MultiPredictThread(threading.Thread):
     def __init__(self, thread_id, processer, model_name, model_config, result_dict, data=None):
         threading.Thread.__init__(self)
-        self.log = get_stream_logger('MultiPredictThread: %s' % thread_id)
+        from datasci.workflow.config.log_config import log_level
+        self.log = get_stream_logger('MultiPredictThread: %s' % thread_id, level=log_level)
         self.processer = processer
         self.model_name = model_name
         self.model_config = model_config
@@ -46,7 +46,7 @@ class MultiPredictThread(threading.Thread):
 
 class PredictProcesser(object):
 
-    def __init__(self, config=None, model_map=None, multi_process=False):
+    def __init__(self, config=None, model_map=None, multi_process=False, log=None):
         """
             A packaging of predict process
 
@@ -60,10 +60,12 @@ class PredictProcesser(object):
             -------
             None
         """
+        from datasci.workflow.config.log_config import log_level
+        self.log = get_stream_logger("PREDICT", level=log_level) if log is None else log
         self.jobs = get_config(config_type="job", config=config)
-        log.debug("Job config is : %s" % self.jobs)
+        self.log.debug("Job config is : %s" % self.jobs)
         self.models = get_config(config_type="model", config=model_map)
-        log.debug("Model config is : %s" % self.models)
+        self.log.debug("Model config is : %s" % self.models)
         self.output = self.jobs.get('output')
         self.join_key = self.output.get('join_key')
 
@@ -95,9 +97,9 @@ class PredictProcesser(object):
             return result_dict
         else:
             for model_name, model_config in models_config.items():
-                log.info('The process of %s starting ... ...' % model_name)
+                self.log.info('The process of %s starting ... ...' % model_name)
                 self._run(model_name=model_name, model_config=model_config, result_dict=result_dict, data=data)
-                log.info('The process of %s finished' % model_name)
+                self.log.info('The process of %s finished' % model_name)
             return result_dict
 
     def _run(self, model_name, model_config, result_dict, data=None):
@@ -110,7 +112,7 @@ class PredictProcesser(object):
             sub_feature_process_path = os.path.join(self.feature_process_path, model_name)
             full_feature_process_file = os.path.join(sub_feature_process_path, feature_process_file)
             if not os.path.exists(full_feature_process_file):
-                log.error("Feature group process file %s is not exists ! " % full_feature_process_file)
+                self.log.error("Feature group process file %s is not exists ! " % full_feature_process_file)
                 exit(-1)
             feature_process = GroupFeatureProcesser.read_feature_processer(full_feature_process_file)
 
@@ -128,7 +130,7 @@ class PredictProcesser(object):
                 model_type=model_type,
                 model_file=full_model_file,
                 model_map=self.models,
-
+                log = self.log
             )
             ret = self.predict(predict_package=predict_package, feature_process=feature_process,
                                input_config=input_config, data=data)
@@ -199,7 +201,7 @@ class PredictProcesser(object):
             if extend_columns is not None:
                 for col_name, col_value in extend_columns.items():
                     save_d[col_name] = col_value
-            log.info('Save data which batch number is %s ' % i)
+            self.log.info('Save data which batch number is %s ' % i)
             save_data(save_d, output_config)
 
     def predict(self, predict_package, feature_process, data=None, input_config=None):
@@ -239,7 +241,7 @@ class PredictProcesser(object):
                 if self.join_key in tdata.columns.tolist():
                     join_data = tdata[self.join_key]
 
-                log.info('%s feature engineering starting ... ...' %  predict_package.model_name)
+                self.log.info('%s feature engineering starting ... ...' %  predict_package.model_name)
                 select_data = feature_process.select_columns(data=data)
                 feature_package = feature_process.get_feature_package()
                 predict_data = feature_package.transform(select_data)
@@ -265,7 +267,7 @@ class PredictProcesser(object):
             if self.join_key in tdata.columns.tolist():
                 join_data = tdata[self.join_key]
 
-            log.info('%s feature engineering starting ... ...' % predict_package.model_name)
+            self.log.info('%s feature engineering starting ... ...' % predict_package.model_name)
             select_data = feature_process.select_columns(data=tdata)
             feature_package = feature_process.get_feature_package()
             predict_data = feature_package.transform(select_data)

@@ -1,7 +1,6 @@
 import json
 from datasci.utils.reflection import Reflection
 
-
 func_conf_default = {
 
     "load_model": {
@@ -141,7 +140,7 @@ def get_outclass_function(object_type, config=None, config_file=None):
     _config = config_file
     if _config is None:
         from datasci.workflow.config.global_config import global_config
-        _config = global_config.get(object_type, None) if config_file is None else config_file
+        _config = global_config.get(object_type, None)
     with open(_config) as f:
         conf = f.read()
         file_config = json.loads(conf)

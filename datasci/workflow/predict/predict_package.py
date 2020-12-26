@@ -2,11 +2,9 @@ import os
 from datasci.workflow.model.model_func import load_model_func, predict_func
 from datasci.utils.mylog import get_file_logger, get_stream_logger
 
-log = get_stream_logger("PredictPackage")
-
 
 class PredictPackage(object):
-    def __init__(self, model_name, model_file, model_type, model_version, model_map=None):
+    def __init__(self, model_name, model_file, model_type, model_version, model_map=None, log=None):
         """
         A package of predict
 
@@ -30,6 +28,8 @@ class PredictPackage(object):
         -------
         None
         """
+        from datasci.workflow.config.log_config import log_level
+        self.log = get_stream_logger("PREDICT", level=log_level) if log is None else log
         self.model_name = model_name
         self.model_file = model_file
         self.model_type = model_type
@@ -54,7 +54,7 @@ class PredictPackage(object):
 
         model = self._get_model()
         predict_params = {
-           "data" : data
+            "data": data
         }
 
         result = predict_func(m_type=self.model_type, model=model, func_params=predict_params, config=self.model_map)
@@ -62,7 +62,7 @@ class PredictPackage(object):
 
     def _get_model(self):
         if not os.path.exists(self.model_file):
-            log.error("Model file %s is not exists ! " % self.model_file)
+            self.log.error("Model file %s is not exists ! " % self.model_file)
             exit(-1)
         load_model_func_params = {"filename": self.model_file}
         model = load_model_func(m_type=self.model_type, model=None, func_params=load_model_func_params)

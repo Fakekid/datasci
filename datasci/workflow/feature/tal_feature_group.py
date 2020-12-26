@@ -56,7 +56,6 @@ class FeatureEncoder(object):
 
     def transform(self, X):
         if self.is_fit == False:
-            print('Please fit your data first!')
             exit(-1)
         if self.encoder is None:
             return X.values
@@ -134,7 +133,6 @@ class FeatureEncoderGroup(object):
 
     def transform(self, X):
         if self.is_fit == False:
-            print('Please fit your data first!')
             exit(-1)
         data_list = list()
         for fe in self.encoder_list:
@@ -160,7 +158,7 @@ class FeaturePackage(object):
     Its includes serval Feature group in it and realize the fit/ fit_transform / transform func in it
     """
 
-    def __init__(self, init_config, order, encoder_map=None):
+    def __init__(self, init_config, order, encoder_map=None, log=None):
         """
             Parameters
             ----------
@@ -173,6 +171,9 @@ class FeaturePackage(object):
             -------
             None
         """
+        from datasci.utils.mylog import get_stream_logger
+        from datasci.workflow.config.log_config import log_level
+        self.log = get_stream_logger("FEATURE", level=log_level) if log is None else log
         self.is_fit = False
         self.config = init_config
         self.order = order
@@ -216,7 +217,7 @@ class FeaturePackage(object):
 
     def transform(self, X):
         if self.is_fit == False:
-            print('Please fit your data first!')
+            self.log.error('Please fit your data first!')
             exit(-1)
         data = X
         for feg in self.feg_list:
@@ -234,7 +235,7 @@ class FeaturePackage(object):
         for encode_type in self._prase_dag():
             encoder_group_config = self.config.get(encode_type, None)
             if encoder_group_config is None:
-                print("Encoder Group Config is NULL!")
+                self.log.error("Encoder Group Config is NULL!")
                 exit(-1)
             if updated_conf == None:
                 updated_conf = self._update_conf(None, encoder_group_config)
@@ -264,7 +265,7 @@ class FeaturePackage(object):
             db['feature_package'] = self
             db.close()
         else:
-            print("Feature package is unfiting!")
+            self.log.error("Feature package is unfiting!")
 
     @staticmethod
     def dump_feature_package(feature_package, dist_file):
@@ -286,7 +287,10 @@ class FeaturePackage(object):
             db['feature_package'] = feature_package
             db.close()
         else:
-            print("Feature package is unfiting!")
+            from datasci.utils.mylog import get_stream_logger
+            from datasci.workflow.config.log_config import log_level
+            log = get_stream_logger("FEATURE", level=log_level)
+            log.error("Feature package is unfiting!")
 
     @staticmethod
     def load_feature_package(source_file):
