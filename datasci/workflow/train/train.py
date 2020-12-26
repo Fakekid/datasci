@@ -39,7 +39,7 @@ class MultiTrainThread(threading.Thread):
 
 
 class TrainProcesser(object):
-    def __init__(self, config=None, fconfig=None, encoder_map=None, model_map=None, multi_process=False, log=None):
+    def __init__(self, config=None, fconfig=None, encoder_map=None, model_map=None,  log=None):
         """
             A packaging of train
 
@@ -89,11 +89,10 @@ class TrainProcesser(object):
         check_path(self.model_path)
         self.feature_process_path = paths.get('feature_package_path')
         check_path(self.feature_process_path)
-        self.multi_processs = multi_process
 
-    def run(self, data=None):
+    def run(self, data=None, multi_process = False):
         models_config = self.jobs.get('models')
-        if self.multi_processs:
+        if multi_process:
             i = 0
             for model_name, model_config in models_config.items():
                 new_thread = MultiTrainThread(thread_id=i, processer=self, model_name=model_name,

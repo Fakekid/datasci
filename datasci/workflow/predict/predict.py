@@ -46,7 +46,7 @@ class MultiPredictThread(threading.Thread):
 
 class PredictProcesser(object):
 
-    def __init__(self, config=None, model_map=None, multi_process=False, log=None):
+    def __init__(self, config=None, model_map=None,  log=None):
         """
             A packaging of predict process
 
@@ -80,12 +80,11 @@ class PredictProcesser(object):
         check_path(self.model_path)
         self.feature_process_path = paths.get('feature_package_path')
         check_path(self.feature_process_path)
-        self.multi_process = multi_process
 
-    def run(self, data=None):
+    def run(self, data=None, multi_process = False):
         models_config = self.jobs.get('models')
         result_dict = dict()
-        if self.multi_process:
+        if multi_process:
             i = 0
             for model_name, model_config in models_config.items():
                 new_thread = MultiPredictThread(thread_id=i, processer=self, model_name=model_name, model_config=model_config,result_dict=result_dict,data=data)

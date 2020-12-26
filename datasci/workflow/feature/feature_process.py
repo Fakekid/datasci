@@ -67,14 +67,14 @@ class GroupFeatureProcesser(object):
             -------
             None
         """
-        if config is None:
-            print("Feature process config must not None!")
-            exit(0)
-        if encoder_map is None:
-            print("Encoder Map config must not None!")
-            exit(0)
         from datasci.workflow.config.log_config import log_level
         self.log = get_stream_logger("FEATURE", level=log_level) if log is None else log
+        if config is None:
+            self.log.error("Feature process config must not None!")
+            exit(0)
+        if encoder_map is None:
+            self.log.error("Encoder Map config must not None!")
+            exit(0)
         self.simple_feature = config.get('simple', None)
         self.process_dag = config.get('process_dag', None)
 
