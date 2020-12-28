@@ -16,7 +16,6 @@ pd.set_option('display.max_columns', None)
 # 显示所有行
 pd.set_option('display.max_rows', None)
 
-
 def main(argv):
     job_type = None
     job_config = None
@@ -74,39 +73,16 @@ def main(argv):
     if job_type is None:
         job_type = "predict"
 
-    def args_parse(args):
-
-        def is_json(string):
-            try:
-                json.loads(string)
-            except ValueError:
-                return False
-            return True
-
-        if args is None:
-            return None
-        if is_json(args):
-            return json.loads(args)
-        else:
-            with open(args, 'r') as f:
-                config = f.read()
-            return json.loads(config)
-
-    job_config = args_parse(job_config)
-    feature_config = args_parse(feature_config)
-    encoder_config = args_parse(encoder_config)
-    model_config = args_parse(model_config)
-
     log.info("Job type is %s" % job_type)
 
     if job_type == 'train':
         train_class = TrainProcesser(config=job_config, fconfig=feature_config, encoder_map=encoder_config,
                                      model_map=model_config)
-        train_class.run(multi_process=True)
+        train_class.run(multi_process=multi_process)
 
     if job_type == 'predict':
         predict_class = PredictProcesser(config=job_config, model_map=model_config)
-        result = predict_class.run(multi_process=True)
+        result = predict_class.run(multi_process=multi_process)
         result['join'] = predict_class.join(result, join_key=join_key)
         ex_col = {
             'model_version': 'join',

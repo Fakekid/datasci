@@ -10,12 +10,12 @@ global_config = {
     "log_dir" : log_dir,
     "data_dir" : data_dir,
     "db_config": os.path.join(config_dir, "db_config.ini"),
-    "ticket": os.path.join(config_dir, "ticket"),
     "encoder": os.path.join(config_dir, "encoder_config.json"),
     "model": os.path.join(config_dir, "model_config.json"),
     "strategy": os.path.join(config_dir, "strategy_config.json"),
     "feature": os.path.join(config_dir, "feature_config.json"),
     "job": os.path.join(config_dir, "jobs_config.json"),
+    "workflow": os.path.join(config_dir, "workflow.json"),
     "log_path": log_dir,
     "data_path": data_dir
 }
