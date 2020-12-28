@@ -10,7 +10,7 @@ def _init_node(nodename, config):
     next_nodes = config.get(nodename).get("next")
     if len(next_nodes) == 0 or next_nodes == "" or next_nodes == []:
         next_nodes = None
-    runable = config.get(nodename).get("runable")
+    runable = config.get(nodename).get("runnable")
     params = config.get(nodename).get("params")
     input_data_file = config.get(nodename).get("input")
     if input_data_file is None or input_data_file == "":
