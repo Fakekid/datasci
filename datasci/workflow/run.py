@@ -47,7 +47,6 @@ def run(config=None):
         print("STEP %s FINISHED : %s node is finished...." % (i, node.node_name))
         print("\n")
         i += 1
-        time.sleep(1)
         if node.next_nodes is not None:
             for n_name in node.next_nodes:
                 sub_node = _init_node(nodename=n_name, config=run_dag_config)

@@ -54,3 +54,4 @@ class Node(object):
         else:
             self.output_data = self.input_data
             self.is_finished = True
+        return self.output_data
