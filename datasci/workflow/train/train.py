@@ -12,7 +12,6 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import threading
 
-
 threadLock = threading.Lock()
 threads = []
 
@@ -39,7 +38,7 @@ class MultiTrainThread(threading.Thread):
 
 
 class TrainProcesser(object):
-    def __init__(self, config=None, fconfig=None, encoder_map=None, model_map=None,  log=None):
+    def __init__(self, config=None, fconfig=None, encoder_map=None, model_map=None, log=None):
         """
             A packaging of train
 
@@ -90,7 +89,7 @@ class TrainProcesser(object):
         self.feature_process_path = paths.get('feature_package_path')
         check_path(self.feature_process_path)
 
-    def run(self, data=None, multi_process = False):
+    def run(self, data=None, multi_process=False):
         models_config = self.jobs.get('models')
         if multi_process:
             i = 0
@@ -127,7 +126,7 @@ class TrainProcesser(object):
                 model_type=model_type,
                 model_version=model_version,
                 model_map=self.models,
-                log = self.log
+                log=self.log
             )
             self.train(train_package=train_package, feature_process=feature_process,
                        feature_process_path=self.feature_process_path, input_config=model_input_config, data=data,
@@ -188,13 +187,24 @@ class TrainProcesser(object):
             tdata = get_data(input_config)
         fpr = feature_process.get_feature_processer()
 
+        model_sub_path = os.path.join(save_path, train_package.model_name)
+        check_path(model_sub_path)
+        model_file_name = "%s_%s.model" % (train_package.model_type, run_time)
+        model_file_path = os.path.join(model_sub_path, model_file_name)
+
         if isinstance(tdata, Iterable) and not isinstance(tdata, pd.DataFrame):
             X_train_datas = list()
             X_val_datas = list()
             y_train_datas = list()
             y_val_datas = list()
-
+            index = 0
             for data in tdata:
+                tmp_train_data_path = os.path.join(os.path.dirname(save_path), "train")
+                tmp_train_data_file = os.path.join(tmp_train_data_path,
+                                                   "%s_%s_%s.data" % (train_package.model_name, run_time, index))
+                data.to_csv(tmp_train_data_file)
+                index += 1
+
                 data[data.isnull()] = np.NaN
                 _data, _label = feature_process.select_columns(data=data, with_label=True)
                 X_train, X_val, y_train, y_val = train_test_split(_data, _label, test_size=val_prop,
@@ -231,7 +241,8 @@ class TrainProcesser(object):
                 pre_model = model
                 # Evalating ... ...
                 self.log.info('Evalating model %s  ... ...' % train_package.model_name)
-                train_package.evaluate(X_val=X_val, y_val=y_val, willing=willing, save_path=save_path)
+                eval_ret = train_package.evaluate(X_val=X_val, y_val=y_val, willing=willing, save_path=model_file_path)
+                self.log.info('%s Evaluated result : %s ' % (train_package.model_name, eval_ret))
         else:
             _data, _label = feature_process.select_columns(data=tdata, with_label=True)
             X_train, X_val, y_train, y_val = train_test_split(_data, _label, test_size=0.2, train_size=0.8,
@@ -254,9 +265,5 @@ class TrainProcesser(object):
 
             # Evalating ... ...
             self.log.info('Evalating model %s  ... ...' % train_package.model_name)
-            model_sub_path = os.path.join(save_path, train_package.model_name)
-            check_path(model_sub_path)
-            model_file_name = "%s_%s.model" % (train_package.model_type, run_time)
-            save_path = os.path.join(model_sub_path, model_file_name)
-            eval_ret = train_package.evaluate(X_val=X_val, y_val=y_val, willing=willing, save_path=save_path)
+            eval_ret = train_package.evaluate(X_val=X_val, y_val=y_val, willing=willing, save_path=model_file_path)
             self.log.info('%s Evaluated result : %s ' % (train_package.model_name, eval_ret))
