@@ -205,13 +205,14 @@ class TrainProcesser(object):
                 y_val_datas.append(y_val)
 
             self.log.info('%s getting feature processer ... ' % train_package.model_name)
-            all_train_data = np.vstack(X_train_datas)
+            all_train_data = pd.concat(X_train_datas, axis=0)
             fpr.fit(all_train_data)
             del all_train_data
             if save_gfp:
-                create_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
-                file_name = "%s_%s_%s.fper" % (train_package.model_name, train_package.model_type, create_time)
-                feature_process_file = os.path.join(feature_process_path, file_name)
+                fp_sub_path = os.path.join(feature_process_path, train_package.model_name)
+                check_path(fp_sub_path)
+                file_name = "%s_%s.fper" % (train_package.model_type, run_time)
+                feature_process_file = os.path.join(fp_sub_path, file_name)
                 GroupFeatureProcesser.write_feature_processer(feature_process, feature_process_file)
                 self.log.info('Model %s Saved group feature process in dir : %s' % (
                     train_package.model_name, feature_process_file))
