@@ -15,7 +15,7 @@ def get_host_and_ip():
         ip = socket.gethostbyname(socket.gethostname())
         return hostname, ip
     except Exception as e:
-        raise e
+        print(e)
         # return "unknown_host", "0.0.0.0"
 
 

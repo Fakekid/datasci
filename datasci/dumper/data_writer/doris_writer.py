@@ -23,7 +23,7 @@ class DorisDataWriter(object):
         try:
             self.mysql_utils.get_executemany_sql(self.sql, result)
         except Exception as e:
-            self.log.warn('SQL connect failed! Skipping this record')
+            self.log.error('SQL failed! Reason : %s ' % e)
 
     def __del__(self):
         del self.mysql_utils

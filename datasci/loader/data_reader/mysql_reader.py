@@ -44,7 +44,7 @@ class MySQLDataReader(object):
             try:
                 df = pd.read_sql(sql, self.engine)
             except Exception as e:
-                self.log.warn('SQL connect failed, skip this batch size !')
+                self.log.error('SQL failed! Reason : %s ' % e)
                 continue
             # 判断最后一次迭代，并处理数据后退出
             cur_batch_size = len(df)
