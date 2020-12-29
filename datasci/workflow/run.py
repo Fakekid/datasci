@@ -1,30 +1,42 @@
 import json
-import time
 from queue import Queue
-from datasci.workflow.node import Node
+from datasci.utils.reflection import Reflection
 import pandas as pd
 
 
 def _init_node(nodename, config):
-    node_type = config.get(nodename).get("node_type")
-    next_nodes = config.get(nodename).get("next")
+    node_class = config.get(nodename).get("node_class")
+    idx = node_class.rfind(".")
+    module_path = node_class[0: idx]
+    class_name = node_class[idx + 1: len(node_class)]
+    if module_path is None:
+        raise Exception("Module path is None!")
+    if class_name is None:
+        raise Exception("Class name is None!")
+
+    params = config.get(nodename).get("params", None)
+    if len(params) == 0:
+        params = None
+    next_nodes = config.get(nodename).get("next", None)
     if len(next_nodes) == 0 or next_nodes == "" or next_nodes == []:
         next_nodes = None
-    runable = config.get(nodename).get("runnable")
-    params = config.get(nodename).get("params")
     input_data_file = config.get(nodename).get("input")
     if input_data_file is None or input_data_file == "":
         input_data = None
     else:
         input_data = pd.read_csv(input_data_file)
-    if len(params) == 0:
-        params = None
-    node = Node(node_name=nodename, node_type=node_type, next_nodes=next_nodes, runable=runable, params=params,
-                input_data=input_data)
-    return node
+    init_params = {
+        "node_name": nodename,
+        "next_nodes": next_nodes,
+        "params": params,
+        "input_data": input_data
+    }
+    cls_obj = Reflection.reflect_obj(module_path=module_path, class_name=class_name, params=init_params)
+
+    return cls_obj
 
 
-def run(config=None):
+def run(config=None, multi_process=True):
     if config is None:
         from datasci.workflow.config.global_config import global_config
         config = global_config.get("workflow")
@@ -43,7 +55,7 @@ def run(config=None):
         print("----------------------------------------")
         print("STEP %s START : %s node is running ...." % (i, node.node_name))
         print("... ...")
-        ret = node.run()
+        ret = node.run(multi_process = multi_process)
         print("STEP %s FINISHED : %s node is finished...." % (i, node.node_name))
         print("\n")
         i += 1
