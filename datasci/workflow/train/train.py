@@ -181,6 +181,7 @@ class TrainProcesser(object):
             result
                 None
         """
+        global y_test
         run_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
 
         if data is not None:
@@ -197,8 +198,10 @@ class TrainProcesser(object):
         if isinstance(tdata, Iterable) and not isinstance(tdata, pd.DataFrame):
             X_train_datas = list()
             X_val_datas = list()
+            X_test_datas = list()
             y_train_datas = list()
             y_val_datas = list()
+            y_test_datas = list()
             index = 0
             for data in tdata:
                 tmp_train_data_path = os.path.join(os.path.dirname(save_path), "train")
@@ -211,10 +214,14 @@ class TrainProcesser(object):
                 _data, _label = feature_process.select_columns(data=data, with_label=True)
                 X_train, X_val, y_train, y_val = train_test_split(_data, _label, test_size=val_prop,
                                                                   train_size=(1.0 - val_prop), random_state=1024)
+                X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, test_size=0.5,
+                                                                train_size=0.5, random_state=1024)
                 X_train_datas.append(X_train)
                 X_val_datas.append(X_val)
+                X_test_datas.append(X_test)
                 y_train_datas.append(y_train)
                 y_val_datas.append(y_val)
+                y_test_datas.append(y_test)
 
             self.log.info('%s getting feature processer ... ' % train_package.model_name)
             all_train_data = pd.concat(X_train_datas, axis=0)
@@ -235,20 +242,33 @@ class TrainProcesser(object):
                 y_train = y_train_datas[i]
                 X_val = X_val_datas[i]
                 y_val = y_val_datas[i]
+                X_test = X_test_datas[i]
+                y_test = y_test_datas[i]
 
                 X_train = fpr.transform(X_train)
                 X_val = fpr.transform(X_val)
+                X_test = fpr.transform(X_test)
                 model = train_package.train(X_train=X_train, X_val=X_val, y_train=y_train, y_val=y_val,
                                             pre_model=pre_model)
                 pre_model = model
                 # Evalating ... ...
                 self.log.info('Evalating model %s  ... ...' % train_package.model_name)
-                eval_ret = train_package.evaluate(X_val=X_val, y_val=y_val, willing=willing, save_path=model_file_path)
-                self.log.info('%s Evaluated result : %s ' % (train_package.model_name, eval_ret))
+                train_ret = train_package.evaluate(X_val=X_train, y_val=y_train)
+                self.log.info('Train data size %s, %s Evaluated result : %s ' % (
+                    X_train.shape[0], train_package.model_name, train_ret))
+                eval_ret = train_package.evaluate(X_val=X_val, y_val=y_val)
+                self.log.info('Valuate data size %s, %s Evaluated result : %s ' % (
+                    X_val.shape[0], train_package.model_name, eval_ret))
+                test_ret = train_package.evaluate(X_val=X_test, y_val=y_test, willing=willing,
+                                                  save_path=model_file_path)
+                self.log.info('Test data size %s, %s Evaluated result : %s ' % (
+                    X_test.shape[0], train_package.model_name, test_ret))
         else:
             _data, _label = feature_process.select_columns(data=tdata, with_label=True)
-            X_train, X_val, y_train, y_val = train_test_split(_data, _label, test_size=0.2, train_size=0.8,
-                                                              random_state=12)
+            X_train, X_val, y_train, y_val = train_test_split(_data, _label, test_size=val_prop,
+                                                              train_size=(1.0 - val_prop), random_state=1024)
+            X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, test_size=0.5,
+                                                            train_size=0.5, random_state=1024)
             self.log.info('%s getting feature processer ... ' % train_package.model_name)
             X_train = fpr.fit_transform(X_train)
 
@@ -263,9 +283,17 @@ class TrainProcesser(object):
 
             # Training ... ...
             X_val = fpr.transform(X_val)
+            X_test = fpr.transform(X_test)
             train_package.train(X_train=X_train, X_val=X_val, y_train=y_train, y_val=y_val)
 
             # Evalating ... ...
             self.log.info('Evalating model %s  ... ...' % train_package.model_name)
-            eval_ret = train_package.evaluate(X_val=X_val, y_val=y_val, willing=willing, save_path=model_file_path)
-            self.log.info('%s Evaluated result : %s ' % (train_package.model_name, eval_ret))
+            train_ret = train_package.evaluate(X_val=X_train, y_val=y_train, willing=willing)
+            self.log.info('Train data size %s, %s Evaluated result : %s ' % (
+                X_train.shape[0], train_package.model_name, train_ret))
+            eval_ret = train_package.evaluate(X_val=X_val, y_val=y_val, willing=willing)
+            self.log.info('Valuate data size %s, %s Evaluated result : %s ' % (
+                X_val.shape[0], train_package.model_name, eval_ret))
+            test_ret = train_package.evaluate(X_val=X_test, y_val=y_test, willing=willing, is_test=False, save_path=model_file_path)
+            self.log.info(
+                'Test data size %s, %s Evaluated result : %s ' % (X_test.shape[0], train_package.model_name, test_ret))

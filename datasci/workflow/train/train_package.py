@@ -44,10 +44,10 @@ class TrainPackage(object):
         self.model, _ = get_object(object_name=model_type, config=model_map)
         self.id = "tp_%s" % self.model_name
 
-    def evaluate(self,X_val, y_val, willing=None, save_path=None):
+    def evaluate(self,X_val, y_val, willing=None, is_test=True,  save_path=None):
         # Eval & Save
         result = eval_func(m_type=self.model_type, model=self.model, X=X_val, y=y_val, willing=willing,config=self.model_map,
-                           is_test=False, save_path=save_path)
+                           is_test=is_test, save_path=save_path)
         return result
 
     def train(self, X_train=None, X_val=None, y_train=None, y_val=None, pre_model=None):
