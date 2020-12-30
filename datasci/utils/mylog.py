@@ -12,7 +12,7 @@ stream_logger_handle={}
 def get_file_logger(logger_name='root', log_path='mylog.log.', level=None):
     logger = logging.getLogger(logger_name)
     log_level = level if level else LOG_LEVEL
-    logger.setLevel(LOG_LEVEL)
+    logger.setLevel(log_level)
     handler = file_logger_handler.get(logger_name, None)
     if handler is None:
         handler = TimedRotatingFileHandler(log_path, when='midnight' ,interval=1, backupCount=30)

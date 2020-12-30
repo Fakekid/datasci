@@ -1,11 +1,9 @@
 # -*- coding:utf-8 -*-
 import configparser
-import platform
 from datasci.workflow.config.global_config import global_config
 
 # 全局参数变化获取
 def get_global_config(section,options):
-    sysstr = platform.system()
     conf = configparser.ConfigParser()
     file_dir = global_config.get('db_config')  # 路径自己指定，我这里是以settings.py为参考，abspath是取它的上级目录，也可以直接指定绝对路径来读取
     conf.read(file_dir)  # 读config.ini文件

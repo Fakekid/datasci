@@ -98,9 +98,7 @@ class GroupFeatureProcesser(object):
             return None
 
         for k, v in self.simple_feature.items():
-            details = v.get('details')
             name = v.get('name')
-            feature_type = v.get('type')
             is_use = v.get('is_use')
             is_label = v.get('is_label')
             process = v.get('process')

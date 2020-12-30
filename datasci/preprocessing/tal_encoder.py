@@ -16,6 +16,7 @@ def column_change(self, input_columns, change_feature_map):
 ! 如果不定义 column_change， 系统将使用 column.column_change 函数,此函数也许无法满足你的需求。
 """
 
+
 class TalOrdinalEncoder(OrdinalEncoder):
     """
         Inherit sklearn.OrdinalEncoder
@@ -71,7 +72,7 @@ class TalWoeEncoder(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self):
-        pass
+        print("__init__")
 
     def fit(self, X, y=None):
         return self

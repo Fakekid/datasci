@@ -185,12 +185,10 @@ class FeaturePackage(object):
 
     def _prase_dag(self):
         order_list = list()
-        n = 'start'
-        for i in range(len(self.order) - 1):
-            n = self.order[n]
-            if n == None or n == 'end':
-                return None
+        n = self.order['start']
+        while n is not None and n != 'end':
             order_list.append(n)
+            n = self.order[n]
         return order_list
 
     def _update_conf(self, feature_map, encoder_group_config):

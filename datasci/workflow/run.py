@@ -10,9 +10,11 @@ def _init_node(nodename, config):
     module_path = node_class[0: idx]
     class_name = node_class[idx + 1: len(node_class)]
     if module_path is None:
-        raise Exception("Module path is None!")
+        print("Module path is None!")
+        exit(-1)
     if class_name is None:
-        raise Exception("Class name is None!")
+        print("Class name is None!")
+        exit(-1)
 
     params = config.get(nodename).get("params", None)
     if len(params) == 0:
@@ -55,7 +57,7 @@ def run(config=None, multi_process=True):
         print("----------------------------------------")
         print("STEP %s START : %s node is running ...." % (i, node.node_name))
         print("... ...")
-        ret = node.run(multi_process = multi_process)
+        ret = node.run(multi_process=multi_process)
         print("STEP %s FINISHED : %s node is finished...." % (i, node.node_name))
         print("\n")
         i += 1

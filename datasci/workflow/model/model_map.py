@@ -73,10 +73,8 @@ def _get_object(object_dict):
     idx = object_class_path.rfind(".")
     module_path = object_class_path[0: idx]
     class_name = object_class_path[idx + 1: len(object_class_path)]
-    if module_path is None:
-        raise Exception("Module path is None!")
-    if class_name is None:
-        raise Exception("Class name is None!")
+    if module_path is None or class_name is None:
+        return None
     params = object_dict.get("params", None)
     cls_obj = Reflection.reflect_obj(module_path=module_path, class_name=class_name, params=params)
     return cls_obj

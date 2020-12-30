@@ -16,7 +16,7 @@ class Reflection(object):
             else:
                 return obj_cls(**params)
         else:
-            raise Exception('no ' + class_name + ' exists!')
+            raise AttributeError('%s Not have class %s in it!' % (module_path, class_name))
 
     @staticmethod
     def reflect_func(class_obj, func_name):
@@ -24,7 +24,7 @@ class Reflection(object):
             func = getattr(class_obj, func_name)
             return func
         else:
-            raise Exception('no func ' + func_name + ' exists!')
+            raise AttributeError('%s Not have class %s in it!' % (class_obj, func_name))
 
     @staticmethod
     def reflect_obj_func(module_path, func_name):
@@ -32,6 +32,3 @@ class Reflection(object):
         if hasattr(module, func_name):
             func = getattr(module, func_name)
             return func
-
-# func = Reflection.reflect_obj_func("joblib", "dump")
-# print(type(func))
