@@ -203,7 +203,7 @@ def eval_func(m_type, X, y, model=None, willing=None, config=None, is_test=True,
             true_rate = (pred.sum() / pred.shape[0])
         value = metric_eval_func(y, pred)
         metrics_dict[metric] = value
-        if is_test and value < willing_value:
+        if is_test or value < willing_value:
             access = False
     metrics_dict['true_rate'] = true_rate
     if access:

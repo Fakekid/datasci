@@ -118,6 +118,8 @@ class TrainProcesser(object):
             model_input_config = model_config.get('input').get('train_data')
             # evaluate args
             willing = model_config.get('train').get('willing', False)
+            save_fpg = model_config.get('train').get('save_fpg', False)
+            val_prop = model_config.get('train').get('val_prop', 0.2)
             # model args
             model_type = model_config.get('model_type', None)
             model_version = model_config.get('model_version')
@@ -130,7 +132,7 @@ class TrainProcesser(object):
             )
             self.train(train_package=train_package, feature_process=feature_process,
                        feature_process_path=self.feature_process_path, input_config=model_input_config, data=data,
-                       val_prop=0.2, save_gfp=True, willing=willing, save_path=self.model_path)
+                       val_prop=val_prop, save_gfp=save_fpg, willing=willing, save_path=self.model_path)
 
     def train(self, train_package, feature_process, feature_process_path=None, input_config=None, data=None,
               val_prop=0.2, save_gfp=False, willing=None, save_path=None):
