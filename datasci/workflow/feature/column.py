@@ -15,17 +15,16 @@ def column_change(encoder, input_columns, change_feature_map):
             tmp_cols = ['%s_%s' % (input_columns[i], x) for x in encoder.categories_[i]]
             change_feature_map[input_columns[i]] = tmp_cols
             final_cols.extend(tmp_cols)
-    elif isinstance(encoder, KBinsDiscretizer) and (
-            encoder.encode == 'onehot' or encoder.encode == 'onehot-dense'):
-        k = 1
-        if isinstance(encoder, int):
-            k = encoder.n_bins
-        if isinstance(encoder, list) or isinstance(encoder, tuple):
-            k = len(encoder.n_bins)
-        for col in input_columns:
+    elif isinstance(encoder, KBinsDiscretizer) and (encoder.encode in ['onehot', 'onehot-dense']):
+        for i in range(len(input_columns)):
+            col = input_columns[i]
+            if isinstance(encoder.n_bins, int):
+                k = encoder.n_bins
+            else:
+                k = encoder.n_bins[i]
             tmp_cols = list()
-            for i in range(k):
-                tmp_cols.append('%s_%s' % (col, i))
+            for j in range(k):
+                tmp_cols.append('%s_%s' % (col, j))
             change_feature_map[col] = tmp_cols
             final_cols.extend(tmp_cols)
     else:

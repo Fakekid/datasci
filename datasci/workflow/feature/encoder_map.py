@@ -51,9 +51,9 @@ def _get_encoder_from_encoder_dict(encoder_dict):
     module_path = encoder[0: idx]
     class_name = encoder[idx + 1: len(encoder)]
     if module_path is None:
-        raise Exception("Module path is None!")
+        return None
     if class_name is None:
-        raise Exception("Class name is None!")
+        return None
     params = encoder_dict.get("params", None)
 
     cls_obj = Reflection.reflect_obj(module_path=module_path, class_name=class_name, params=params)
