@@ -237,10 +237,10 @@ class PredictProcesser(object):
                 data[data.isnull()] = np.NaN
                 data.drop_duplicates(inplace=True)
                 join_data = None
-                if self.join_key in tdata.columns.tolist():
-                    join_data = tdata[self.join_key]
+                if self.join_key in data.columns.tolist():
+                    join_data = data[self.join_key]
 
-                self.log.info('%s feature engineering starting ... ...' %  predict_package.model_name)
+                self.log.info('%s feature engineering starting ... ...' % predict_package.model_name)
                 select_data = feature_process.select_columns(data=data)
                 feature_package = feature_process.get_feature_package()
                 predict_data = feature_package.transform(select_data)
