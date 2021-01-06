@@ -36,6 +36,7 @@ setup(name='datasci',
           'shap>=0.36.0',
           'xgboost>=0.71',
           'scipy>=1.4.1',
-          'scikit_learn==0.22.1'
+          'scikit_learn==0.22.1',
+          'sqlalchemy>=1.3.22'
       ],
       zip_safe=False)

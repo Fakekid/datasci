@@ -3,7 +3,6 @@
 from datasci.utils.mylog import get_stream_logger
 from datasci.utils.mysql_utils import MysqlUtils
 
-
 class MySQLDataWriter(object):
     """
         Mysql data writer
@@ -19,7 +18,7 @@ class MySQLDataWriter(object):
         from datasci.workflow.config.log_config import log_level
         self.log = get_stream_logger("DATA_WRITER", level=log_level) if log is None else log
 
-    def to_mysql(self, result):
+    def save_data(self, result):
         try:
             self.mysql_utils.get_executemany_sql(self.sql, result)
         except Exception as e:

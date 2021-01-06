@@ -1,25 +1,27 @@
-
-from sqlalchemy import MetaData, Table, create_engine
-
-engine_data_bank = create_engine(
-    'mysql+pymysql://result_bigdata:l7oekleyZyygvsnhpU3@rm-2ze8s56qvnoda6o811o.mysql.rds.aliyuncs.com:3306/data_bank',
-    encoding='utf8')
-engine_data_doris = create_engine(
-    'mysql+pymysql://xes1v1:1v1.2v2@101.200.80.169:9030/xes1v1_db',
-    encoding='utf8')
+from datasci.utils.reflection import Reflection
 
 
-def save_data(data, output, args=None):
+def _get_writer_class(writer_cls_str, params):
+    idx = writer_cls_str.rfind(".")
+    module_path = writer_cls_str[0: idx]
+    class_name = writer_cls_str[idx + 1: len(writer_cls_str)]
+    if module_path is None:
+        raise Exception("Module path is None!")
+    if class_name is None:
+        raise Exception("Class name is None!")
+    cls_obj = Reflection.reflect_obj(module_path=module_path, class_name=class_name, params=params)
+    return cls_obj
+
+
+def save_data(output_args, data):
     """
-    Save data
+        Args
+        -------
+        output_args
+            output config with different data source
+
     """
-    data_type = output.get('data_type')
-    if data_type == 'file':
-        path = output.get(data_type).get('path')
-        data.to_csv('%s_%s' % (path, args))
-    if data_type == 'mysql':
-        sql = output.get(data_type).get('table')
-        data.to_sql(sql, engine_data_bank, if_exists='append', index=False)
-    if data_type == 'doris':
-        sql = output.get(data_type).get('table')
-        data.to_sql(sql, engine_data_doris, if_exists='append', index=False)
+    data_writer = output_args.get('object')
+    params = output_args.get('params')
+    writer = _get_writer_class(writer_cls_str=data_writer, params=params)
+    return writer.save_data(data=data)

@@ -5,11 +5,12 @@ import json
 from datasci.workflow.config.global_config import config_dir
 
 log_file = os.path.join(config_dir, "log_config.json")
-
-with open(log_file) as f:
-    l = f.read()
-log_config = json.loads(l)
-lvl = log_config.get("level", None) if log_config.get("level", None) is not None else "INFO"
+lvl = "INFO"
+if os.path.exists(log_file):
+    with open(log_file) as f:
+        l = f.read()
+    log_config = json.loads(l)
+    lvl = log_config.get("level", None) if log_config.get("level", None) is not None else "INFO"
 
 
 def _get_loglevel(lvl):

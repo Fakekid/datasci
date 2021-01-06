@@ -201,7 +201,7 @@ class PredictProcesser(object):
                 for col_name, col_value in extend_columns.items():
                     save_d[col_name] = col_value
             self.log.info('Save data which batch number is %s ' % i)
-            save_data(save_d, output_config)
+            save_data(data=save_d, output_args=output_config)
 
     def predict(self, predict_package, feature_process, data=None, input_config=None):
         """

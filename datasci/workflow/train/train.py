@@ -119,6 +119,7 @@ class TrainProcesser(object):
             # evaluate args
             willing = model_config.get('train').get('willing', False)
             save_fpg = model_config.get('train').get('save_fpg', False)
+            save_train_data = model_config.get('train').get('save_train_data', False)
             val_prop = model_config.get('train').get('val_prop', 0.2)
             # model args
             model_type = model_config.get('model_type', None)
@@ -132,10 +133,11 @@ class TrainProcesser(object):
             )
             self.train(train_package=train_package, feature_process=feature_process,
                        feature_process_path=self.feature_process_path, input_config=model_input_config, data=data,
-                       val_prop=val_prop, save_gfp=save_fpg, willing=willing, save_path=self.model_path)
+                       val_prop=val_prop, save_gfp=save_fpg, willing=willing, save_path=self.model_path,
+                       save_train_data=save_train_data)
 
     def train(self, train_package, feature_process, feature_process_path=None, input_config=None, data=None,
-              val_prop=0.2, save_gfp=False, willing=None, save_path=None):
+              val_prop=0.2, save_gfp=False, willing=None, save_path=None, save_train_data=False):
         """
              Predict data and save result, get data from config
              Args
@@ -204,11 +206,12 @@ class TrainProcesser(object):
             y_test_datas = list()
             index = 0
             for data in tdata:
-                tmp_train_data_path = os.path.join(os.path.dirname(save_path), "train")
-                tmp_train_data_file = os.path.join(tmp_train_data_path,
+                if save_train_data:
+                    tmp_train_data_path = os.path.join(os.path.dirname(save_path), "train")
+                    tmp_train_data_file = os.path.join(tmp_train_data_path,
                                                    "%s_%s_%s.data" % (train_package.model_name, run_time, index))
-                data.to_csv(tmp_train_data_file)
-                index += 1
+                    data.to_csv(tmp_train_data_file)
+                    index += 1
 
                 data[data.isnull()] = np.NaN
                 _data, _label = feature_process.select_columns(data=data, with_label=True)
@@ -264,6 +267,13 @@ class TrainProcesser(object):
                 self.log.info('Test data size %s, %s Evaluated result : %s ' % (
                     X_test.shape[0], train_package.model_name, test_ret))
         else:
+            if save_train_data:
+                tmp_train_data_path = os.path.join(os.path.dirname(save_path), "train")
+                tmp_train_data_file = os.path.join(tmp_train_data_path,
+                                                   "%s_%s.data" % (train_package.model_name, run_time))
+                tdata.to_csv(tmp_train_data_file)
+
+            tdata[tdata.isnull()] = np.NaN
             _data, _label = feature_process.select_columns(data=tdata, with_label=True)
             X_train, X_val, y_train, y_val = train_test_split(_data, _label, test_size=val_prop,
                                                               train_size=(1.0 - val_prop), random_state=1024)
@@ -294,6 +304,7 @@ class TrainProcesser(object):
             eval_ret = train_package.evaluate(X_val=X_val, y_val=y_val, willing=willing)
             self.log.info('Valuate data size %s, %s Evaluated result : %s ' % (
                 X_val.shape[0], train_package.model_name, eval_ret))
-            test_ret = train_package.evaluate(X_val=X_test, y_val=y_test, willing=willing, is_test=False, save_path=model_file_path)
+            test_ret = train_package.evaluate(X_val=X_test, y_val=y_test, willing=willing, is_test=False,
+                                              save_path=model_file_path)
             self.log.info(
                 'Test data size %s, %s Evaluated result : %s ' % (X_test.shape[0], train_package.model_name, test_ret))
