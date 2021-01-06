@@ -5,10 +5,8 @@ def _get_writer_class(writer_cls_str, params):
     idx = writer_cls_str.rfind(".")
     module_path = writer_cls_str[0: idx]
     class_name = writer_cls_str[idx + 1: len(writer_cls_str)]
-    if module_path is None:
-        raise Exception("Module path is None!")
-    if class_name is None:
-        raise Exception("Class name is None!")
+    if module_path is None or class_name is None:
+        return None
     cls_obj = Reflection.reflect_obj(module_path=module_path, class_name=class_name, params=params)
     return cls_obj
 

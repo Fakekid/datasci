@@ -183,13 +183,8 @@ class TrainProcesser(object):
             result
                 None
         """
-        global y_test
         run_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
-
-        if data is not None:
-            tdata = data
-        else:
-            tdata = get_data(input_config)
+        tdata = get_data(input_config) if data is None else data
         fpr = feature_process.get_feature_processer()
 
         model_sub_path = os.path.join(save_path, train_package.model_name)

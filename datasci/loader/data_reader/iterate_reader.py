@@ -59,19 +59,20 @@ class MySQLIterateDataReader(object):
         return self
 
     def __next__(self):
-        while self.max_iter != 0:
+        if self.max_iter != 0:
             # 获取MySQL数据
             sql = '%s limit %s offset %s ' % (self.sql, self.batch_size, self.offset)
             self.log.debug('Read data from sql script: %s ' % sql)
             self.log.info('Read data from offset : %s ' % self.offset)
+
             try:
                 df = pd.read_sql(sql, self.engine)
             except Exception as e:
                 self.log.error('SQL failed! Reason : %s ' % e)
-                continue
             # 判断最后一次迭代，并处理数据后退出
             cur_batch_size = len(df)
             self.log.info('Batch size : %s' % cur_batch_size)
+
             if cur_batch_size == 0:
                 self.log.info('Iterate over ... ...')
                 raise StopIteration
@@ -79,12 +80,9 @@ class MySQLIterateDataReader(object):
                 self.offset, self.offset + cur_batch_size,
                 time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
 
-            if cur_batch_size < self.batch_size:
-                self.offset = self.offset + cur_batch_size
-            else:
-                self.offset = self.offset + self.batch_size
-            if self.max_iter != -1:
-                self.max_iter = self.max_iter - 1
+            self.offset = self.offset + cur_batch_size if cur_batch_size < self.batch_size else self.offset + self.batch_size
+            self.max_iter = self.max_iter - 1 if self.max_iter > 0 else self.max_iter
+
             if self.func is None:
                 return df
             else:
