@@ -135,7 +135,7 @@ def predict_func(m_type, model=None, func_params=None, config=None):
     return func(**all_params)
 
 
-def predict_func(m_type, model=None, func_params=None, config=None):
+def predict_proba_func(m_type, model=None, func_params=None, config=None):
     """
        Predict data with model
 
