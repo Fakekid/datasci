@@ -1,3 +1,4 @@
+import os
 import time
 
 from datasci.utils.mysql_utils import MysqlUtils
@@ -85,10 +86,11 @@ class SaveNode(object):
             **self.node_class_params) if self.node_class_params is not None else SaveProcesser()
 
         output_config = self.run_params.get('output_config', None) if self.run_params is not None else None
-        pagesize = self.run_params.get('pagesize', 10000 ) if self.run_params is not None else 10000
+        pagesize = self.run_params.get('pagesize', 10000) if self.run_params is not None else 10000
+        model_name = self.run_params.get('model_name', 'default') if self.run_params is not None else 'default'
 
         ex_col = {
-            'model_version': 'join',
+            'model_version': model_name,
             'dt': "%s" % time.strftime("%Y%m%d", time.localtime())
         }
         save_class.run(data=self.input_data, extend_columns=ex_col, output_config=output_config, pagesize=pagesize)
@@ -152,6 +154,11 @@ class MysqlExecNode(object):
             if self.node_class_params is not None else "Mysql-data_bank"
         sql = self.node_class_params.get('sql', None) \
             if self.node_class_params is not None else None
+
+        if os.path.exists(sql):
+            with open(sql) as f:
+                sql = f.read(sql)
+
         mysql_utils = MysqlUtils(section)
         result = [tuple(x) for x in self.input_data.values]
         try:
@@ -164,7 +171,7 @@ class MysqlExecNode(object):
         return self.output_data
 
 
-class BeginNode(object):
+class StartNode(object):
     def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
         self.node_name = node_name
         self.next_nodes = next_nodes
@@ -175,7 +182,7 @@ class BeginNode(object):
         self.is_finished = False
 
     def run(self):
-        print("Job start at %s " %  time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        print("Job start at %s " % time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         self.output_data = self.input_data
         self.is_finished = True
         return self.output_data

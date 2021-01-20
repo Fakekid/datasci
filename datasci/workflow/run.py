@@ -51,6 +51,19 @@ def _init_node(nodename, config):
 
 
 def run(config=None):
+
+    logo = '''
+
+    ________         _____         ________       _____        ___       __               ______  ________________                  
+    ___  __ \______ ___  /_______ ___  ___/__________(_)       __ |     / /______ ___________  /_____  ____/___  /______ ___      __
+    __  / / /_  __ `/_  __/_  __ `/_____ \ _  ___/__  /        __ | /| / / _  __ \__  ___/__  //_/__  /_    __  / _  __ \__ | /| / /
+    _  /_/ / / /_/ / / /_  / /_/ / ____/ / / /__  _  /         __ |/ |/ /  / /_/ /_  /    _  ,<   _  __/    _  /  / /_/ /__ |/ |/ / 
+    /_____/  \__,_/  \__/  \__,_/  /____/  \___/  /_/          ____/|__/   \____/ /_/     /_/|_|  /_/       /_/   \____/ ____/|__/  
+
+
+            '''
+    print(logo)
+
     result = {}
     if config is None:
         from datasci.workflow.config.global_config import global_config
@@ -66,16 +79,16 @@ def run(config=None):
     i = 1
     while q.qsize() != 0:
         node = q.get()
-        print("----------------------------------------")
-        print("STEP %s START : %s node start at %s" % (
-        i, node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
-        print("... ... ... ... %s Node Running ... ... ... ... " % node.node_name)
+        print("------------------------ STEP %s ------------------------" % i)
+        print("NODE NAME : %s, START TIME : %s" % (
+        node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
+        print(">>> %s Node Running ... ... " % node.node_name)
         ret = node.run()
         if isinstance(node, EndNode):
             result[node.node_name] = ret
-        print("... ... ... ... %s Node Done ... ... ... ... " % node.node_name)
-        print("STEP %s FINISHED : %s node finished at %s " % (
-        i, node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
+        print(">>> %s Node Finished ! " % node.node_name)
+        print("NODE NAME : %s, FINISHED TIME : %s " % (
+        node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
         print("\n")
         i += 1
         if node.next_nodes is not None:
