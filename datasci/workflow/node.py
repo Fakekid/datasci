@@ -182,7 +182,10 @@ class StartNode(object):
         self.is_finished = False
 
     def run(self):
-        print("Job start at %s " % time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        from datasci.utils.mylog import get_stream_logger
+        from datasci.workflow.config.log_config import log_level
+        log = get_stream_logger("START NODE", level=log_level)
+        log.info("Job start at %s " % time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         self.output_data = self.input_data
         self.is_finished = True
         return self.output_data
@@ -201,5 +204,8 @@ class EndNode(object):
     def run(self):
         self.output_data = self.input_data
         self.is_finished = True
-        print("Job finished at %s " % time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        from datasci.utils.mylog import get_stream_logger
+        from datasci.workflow.config.log_config import log_level
+        log = get_stream_logger("END NODE", level=log_level)
+        log.info("Job finished at %s " % time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
         return self.output_data
