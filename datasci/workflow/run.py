@@ -99,4 +99,5 @@ def run(config=None):
                 q.put(sub_node)
         else:
             continue
+        print("------------------------ FINISHED ------------------------")
     return result
