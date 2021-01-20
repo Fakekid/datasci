@@ -1,5 +1,9 @@
 import json
+import time
 from queue import Queue
+
+from datasci.workflow.node import EndNode
+
 from datasci.utils.reflection import Reflection
 import pandas as pd
 
@@ -19,6 +23,13 @@ def _init_node(nodename, config):
     params = config.get(nodename).get("params", None)
     if len(params) == 0:
         params = None
+
+    node_class_params = None
+    run_params = None
+    if params is not None:
+        node_class_params = params.get("node_class_params", None)
+        run_params = params.get("run_params", None)
+
     next_nodes = config.get(nodename).get("next", None)
     if len(next_nodes) == 0 or next_nodes == "" or next_nodes == []:
         next_nodes = None
@@ -30,7 +41,8 @@ def _init_node(nodename, config):
     init_params = {
         "node_name": nodename,
         "next_nodes": next_nodes,
-        "params": params,
+        "node_class_params": node_class_params,
+        "run_params": run_params,
         "input_data": input_data
     }
     cls_obj = Reflection.reflect_obj(module_path=module_path, class_name=class_name, params=init_params)
@@ -38,7 +50,8 @@ def _init_node(nodename, config):
     return cls_obj
 
 
-def run(config=None, multi_process=True):
+def run(config=None):
+    result = {}
     if config is None:
         from datasci.workflow.config.global_config import global_config
         config = global_config.get("workflow")
@@ -50,15 +63,19 @@ def run(config=None, multi_process=True):
 
     start_node = _init_node(nodename='start', config=run_dag_config)
     q.put(start_node)
-    ret = None
     i = 1
     while q.qsize() != 0:
         node = q.get()
         print("----------------------------------------")
-        print("STEP %s START : %s node is running ...." % (i, node.node_name))
-        print("... ...")
-        ret = node.run(multi_process=multi_process)
-        print("STEP %s FINISHED : %s node is finished...." % (i, node.node_name))
+        print("STEP %s START : %s node start at %s" % (
+        i, node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
+        print("... ... ... ... %s Node Running ... ... ... ... " % node.node_name)
+        ret = node.run()
+        if isinstance(node, EndNode):
+            result[node.node_name] = ret
+        print("... ... ... ... %s Node Done ... ... ... ... " % node.node_name)
+        print("STEP %s FINISHED : %s node finished at %s " % (
+        i, node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
         print("\n")
         i += 1
         if node.next_nodes is not None:
@@ -69,4 +86,4 @@ def run(config=None, multi_process=True):
                 q.put(sub_node)
         else:
             continue
-    return ret
+    return result

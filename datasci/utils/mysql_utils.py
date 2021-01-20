@@ -1,7 +1,4 @@
 # -*- coding:utf-8 -*-
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from datasci.utils.read_config import get_global_config
 import pymysql
 import pandas as pd
@@ -23,8 +20,6 @@ class MysqlUtils(object):
             host=self.host,
             port=self.port,
             databases=self.db)
-
-
 
     def get_result_sql(self, sql):
         self.connect = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
@@ -53,7 +48,7 @@ class MysqlUtils(object):
         self.cursor = self.connect.cursor()
         num = 0
         for sql in sqllist:
-            num=self.cursor.execute(sql)+num
+            num = self.cursor.execute(sql) + num
         self.connect.commit()
         self.connect.close()
         self.connect.close()
@@ -70,7 +65,7 @@ class MysqlUtils(object):
         self.connect.close()
         return df_tel
 
-    def get_executemany_sql(self,sql,data_info):
+    def get_executemany_sql(self, sql, data_info):
         self.connect = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
                                        db=self.db, charset=self.charset)
         self.cursor = self.connect.cursor()
@@ -79,7 +74,7 @@ class MysqlUtils(object):
         self.cursor.close()
         self.connect.close()
 
-    def get_update_batch_sql(self,sql_list):
+    def get_update_batch_sql(self, sql_list):
         self.connect = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
                                        db=self.db, charset=self.charset)
         self.cursor = self.connect.cursor()
