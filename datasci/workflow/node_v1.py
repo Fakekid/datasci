@@ -1,17 +1,24 @@
 import os
 import time
+
 from datasci.utils.mysql_utils import MysqlUtils
-from datasci.workflow.base_node import BaseNode
+
 from datasci.workflow.output.save import JoinProcesser, SaveProcesser
 from datasci.workflow.predict.predict import PredictProcesser
 from datasci.workflow.train.train import TrainProcesser
 
 
-class TrainNode(BaseNode):
+class TrainNode(object):
+    def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
+        self.node_name = node_name
+        self.next_nodes = next_nodes
+        self.input_data = input_data
+        self.node_class_params = node_class_params
+        self.run_params = run_params
+        self.output_data = None
+        self.is_finished = False
 
     def run(self):
-        if self.input_data is not None and len(self.input_data) == 0:
-            self.input_data = None
         train_class = TrainProcesser(
             **self.node_class_params) if self.node_class_params is not None else TrainProcesser()
         multi_process = self.run_params.get('multi_process', False) if self.run_params is not None else False
@@ -21,11 +28,17 @@ class TrainNode(BaseNode):
         return self.output_data
 
 
-class PredictNode(BaseNode):
+class PredictNode(object):
+    def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
+        self.node_name = node_name
+        self.next_nodes = next_nodes
+        self.input_data = input_data
+        self.node_class_params = node_class_params
+        self.run_params = run_params
+        self.output_data = None
+        self.is_finished = False
 
     def run(self):
-        if self.input_data is not None and len(self.input_data) == 0:
-            self.input_data = None
         predict_class = PredictProcesser(
             **self.node_class_params) if self.node_class_params is not None else PredictProcesser()
         multi_process = self.run_params.get('multi_process', False) if self.run_params is not None else False
@@ -35,7 +48,15 @@ class PredictNode(BaseNode):
         return self.output_data
 
 
-class JoinNode(BaseNode):
+class JoinNode(object):
+    def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
+        self.node_name = node_name
+        self.next_nodes = next_nodes
+        self.input_data = input_data
+        self.node_class_params = node_class_params
+        self.run_params = run_params
+        self.output_data = None
+        self.is_finished = False
 
     def run(self):
         join_class = JoinProcesser(
@@ -50,7 +71,15 @@ class JoinNode(BaseNode):
         return self.output_data
 
 
-class SaveNode(BaseNode):
+class SaveNode(object):
+    def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
+        self.node_name = node_name
+        self.next_nodes = next_nodes
+        self.input_data = input_data
+        self.node_class_params = node_class_params
+        self.run_params = run_params
+        self.output_data = None
+        self.is_finished = False
 
     def run(self):
         save_class = SaveProcesser(
@@ -69,7 +98,15 @@ class SaveNode(BaseNode):
         return self.output_data
 
 
-class SelectDataFromDict(BaseNode):
+class SelectDataFromDict(object):
+    def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
+        self.node_name = node_name
+        self.next_nodes = next_nodes
+        self.input_data = input_data
+        self.node_class_params = node_class_params
+        self.run_params = run_params
+        self.output_data = None
+        self.is_finished = False
 
     def run(self):
         if not isinstance(self.input_data, dict):
@@ -83,7 +120,15 @@ class SelectDataFromDict(BaseNode):
         return self.output_data
 
 
-class SelectColumnsNode(BaseNode):
+class SelectColumnsNode(object):
+    def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
+        self.node_name = node_name
+        self.next_nodes = next_nodes
+        self.input_data = input_data
+        self.node_class_params = node_class_params
+        self.run_params = run_params
+        self.output_data = None
+        self.is_finished = False
 
     def run(self):
         columns = self.node_class_params.get('columns', None) \
@@ -94,7 +139,15 @@ class SelectColumnsNode(BaseNode):
         return self.output_data
 
 
-class MysqlExecNode(BaseNode):
+class MysqlExecNode(object):
+    def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
+        self.node_name = node_name
+        self.next_nodes = next_nodes
+        self.input_data = input_data
+        self.node_class_params = node_class_params
+        self.run_params = run_params
+        self.output_data = None
+        self.is_finished = False
 
     def run(self):
         section = self.node_class_params.get('section', None) \
@@ -118,7 +171,15 @@ class MysqlExecNode(BaseNode):
         return self.output_data
 
 
-class StartNode(BaseNode):
+class StartNode(object):
+    def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
+        self.node_name = node_name
+        self.next_nodes = next_nodes
+        self.input_data = input_data
+        self.node_class_params = node_class_params
+        self.run_params = run_params
+        self.output_data = None
+        self.is_finished = False
 
     def run(self):
         from datasci.utils.mylog import get_stream_logger
@@ -130,28 +191,21 @@ class StartNode(BaseNode):
         return self.output_data
 
 
-class EndNode(BaseNode):
+class EndNode(object):
+    def __init__(self, node_name, next_nodes, input_data=None, node_class_params=None, run_params=None):
+        self.node_name = node_name
+        self.next_nodes = next_nodes
+        self.input_data = input_data
+        self.node_class_params = node_class_params
+        self.run_params = run_params
+        self.output_data = None
+        self.is_finished = False
 
     def run(self):
-        is_merge = self.run_params.get('is_merge', None) if self.run_params is not None else False
-        if is_merge:
-            self.output_data = self.input_merge()
-        else:
-            self.output_data = self.input_data
+        self.output_data = self.input_data
         self.is_finished = True
         from datasci.utils.mylog import get_stream_logger
         from datasci.workflow.config.log_config import log_level
         log = get_stream_logger("END NODE", level=log_level)
         log.info("Job finished at %s " % time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
-        return self.output_data
-
-
-class DebugNode(BaseNode):
-
-    def run(self):
-        # node_class_params = self.node_class_params
-        merge = self.input_merge()
-        input = self.run_params.get('input', None) if self.run_params is not None else merge
-        self.output_data = merge + " " + input
-        self.is_finished = True
         return self.output_data

@@ -1,10 +1,11 @@
-import os
-import time
 import json
+import time
 from queue import Queue
-import pandas as pd
-from datasci.workflow.node_v2 import EndNode
+
+from datasci.workflow.node import EndNode
+
 from datasci.utils.reflection import Reflection
+import pandas as pd
 
 
 def _init_node(nodename, config):
@@ -36,10 +37,7 @@ def _init_node(nodename, config):
     if input_data_file is None or input_data_file == "":
         input_data = None
     else:
-        if os.path.exists(input_data_file):
-            input_data = pd.read_csv(input_data_file)
-        else:
-            input_data = input_data_file
+        input_data = pd.read_csv(input_data_file)
     init_params = {
         "node_name": nodename,
         "next_nodes": next_nodes,
@@ -53,6 +51,7 @@ def _init_node(nodename, config):
 
 
 def run(config=None):
+
     logo = '''
 
     ________         _____         ________       _____        ___       __               ______  ________________                  
@@ -73,55 +72,32 @@ def run(config=None):
         conf = f.read()
     run_dag_config = json.loads(conf)
 
-    run_queue = Queue(maxsize=0)
-    node_map = dict()
-    ready_list = list()
-    start_node = _init_node(nodename='start', config=run_dag_config)
-    node_map['start'] = start_node
-    run_queue.put("start")
-    ready_list.append('start')
-    i = 1
-    print("------------------------ START ------------------------")
-    while run_queue.qsize() != 0:
-        print(">>> Execute Queue size [ %s ]" % run_queue.qsize())
-        print(">>> Ready to Execute Nodes [ %s ]" % ", ".join(ready_list))
-        node_name = run_queue.get()
-        node = node_map.get(node_name)
+    q = Queue(maxsize=0)
 
-        if node.is_finished:
-            print("NODE NAME :[ %s ] is finished, SKIP this Node" % node.node_name)
-            if node_name in ready_list:
-                ready_list.remove(node_name)
-            continue
-        print("\n")
-        print("------------------------ STEP [ %s ]  ------------------------" % i)
-        print("NODE NAME :[ %s ] , START TIME : [ %s ] " % (
-            node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
-        print(">>> [ %s ]  Node Running ... ... " % node.node_name)
+    start_node = _init_node(nodename='start', config=run_dag_config)
+    q.put(start_node)
+    i = 1
+    while q.qsize() != 0:
+        node = q.get()
+        print("------------------------ STEP %s ------------------------" % i)
+        print("NODE NAME : %s, START TIME : %s" % (
+        node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
+        print(">>> %s Node Running ... ... " % node.node_name)
         ret = node.run()
-        if node_name in ready_list:
-            ready_list.remove(node_name)
         if isinstance(node, EndNode):
             result[node.node_name] = ret
-        print(">>> [ %s ]  Node Finished ! " % node.node_name)
-        print("NODE NAME :[ %s ] , FINISHED TIME : [ %s ]  " % (
-            node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
-
+        print(">>> %s Node Finished ! " % node.node_name)
+        print("NODE NAME : %s, FINISHED TIME : %s " % (
+        node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
+        print("\n")
         i += 1
-
         if node.next_nodes is not None:
             for n_name in node.next_nodes:
-                if n_name not in node_map:
-                    sub_node = _init_node(nodename=n_name, config=run_dag_config)
-                    node_map[n_name] = sub_node
-                else:
-                    sub_node = node_map[n_name]
-                if sub_node.input_data is None or isinstance(sub_node.input_data, list):
-                    sub_node.add_input(node.output_data)
-                ready_list.append(n_name)
-                run_queue.put(n_name)
+                sub_node = _init_node(nodename=n_name, config=run_dag_config)
+                if sub_node.input_data is None:
+                    sub_node.input_data = node.output_data
+                q.put(sub_node)
         else:
             continue
-    print("\n")
     print("------------------------ FINISHED ------------------------")
     return result
