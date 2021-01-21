@@ -5,7 +5,6 @@ class BaseNode(object):
     def __init__(self, node_name, next_nodes, input_data, node_class_params=None, run_params=None):
         self.node_name = node_name
         self.next_nodes = next_nodes
-        self.raw_input_data = input_data
         self.node_class_params = node_class_params
         self.run_params = run_params
         self.output_data = None
@@ -26,7 +25,7 @@ class BaseNode(object):
                 return self.input_data[0]
             else:
                 if isinstance(self.input_data[0], pd.DataFrame):
-                    return pd.concat(self.input_data[0], axis=axis)
+                    return pd.concat(self.input_data, axis=axis)
                 elif isinstance(self.input_data[0], dict):
                     result = dict()
                     for item in self.input_data:

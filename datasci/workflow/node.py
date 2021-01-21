@@ -1,5 +1,6 @@
 import os
 import time
+import pandas as pd
 from datasci.utils.mysql_utils import MysqlUtils
 from datasci.workflow.base_node import BaseNode
 from datasci.workflow.output.save import JoinProcesser, SaveProcesser
@@ -10,8 +11,8 @@ from datasci.workflow.train.train import TrainProcesser
 class TrainNode(BaseNode):
 
     def run(self):
-        if self.input_data is not None and len(self.input_data) == 0:
-            self.input_data = None
+        if self.input_data is not None:
+            self.input_data = self.input_merge(axis=0)
         train_class = TrainProcesser(
             **self.node_class_params) if self.node_class_params is not None else TrainProcesser()
         multi_process = self.run_params.get('multi_process', False) if self.run_params is not None else False
@@ -24,8 +25,8 @@ class TrainNode(BaseNode):
 class PredictNode(BaseNode):
 
     def run(self):
-        if self.input_data is not None and len(self.input_data) == 0:
-            self.input_data = None
+        if self.input_data is not None:
+            self.input_data = self.input_merge(axis=0)
         predict_class = PredictProcesser(
             **self.node_class_params) if self.node_class_params is not None else PredictProcesser()
         multi_process = self.run_params.get('multi_process', False) if self.run_params is not None else False
@@ -38,13 +39,17 @@ class PredictNode(BaseNode):
 class JoinNode(BaseNode):
 
     def run(self):
-        join_class = JoinProcesser(
-            **self.node_class_params) if self.node_class_params is not None else JoinProcesser()
-
+        result = None
         join_key = self.run_params.get('join_key', None) if self.run_params is not None else None
-        join_label = self.run_params.get('join_label', 'join') if self.run_params is not None else 'join'
-        result = join_class.run(data_dict=self.input_data, join_key=join_key)
-        result[join_label] = join_class.join(result)
+        if isinstance(self.input_data[0], dict):
+            self.input_data = self.input_merge()
+            join_class = JoinProcesser(
+                **self.node_class_params) if self.node_class_params is not None else JoinProcesser()
+            result = join_class.run(data_dict=self.input_data, join_key=join_key)
+        elif isinstance(self.input_data[0], pd.DataFrame):
+            if join_key is not None:
+                for item in self.input_data:
+                    result = pd.merge(result, item, on=join_key)
         self.output_data = result
         self.is_finished = True
         return self.output_data
@@ -53,6 +58,7 @@ class JoinNode(BaseNode):
 class SaveNode(BaseNode):
 
     def run(self):
+        self.input_data = self.input_merge()
         save_class = SaveProcesser(
             **self.node_class_params) if self.node_class_params is not None else SaveProcesser()
 
@@ -72,6 +78,7 @@ class SaveNode(BaseNode):
 class SelectDataFromDict(BaseNode):
 
     def run(self):
+        self.input_data = self.input_merge()
         if not isinstance(self.input_data, dict):
             self.output_data = self.input_data
         else:
@@ -86,6 +93,7 @@ class SelectDataFromDict(BaseNode):
 class SelectColumnsNode(BaseNode):
 
     def run(self):
+        self.input_data = self.input_merge()
         columns = self.node_class_params.get('columns', None) \
             if self.node_class_params is not None else self.input_data.columns.tolist()
         if columns is not None:
@@ -97,6 +105,7 @@ class SelectColumnsNode(BaseNode):
 class MysqlExecNode(BaseNode):
 
     def run(self):
+        self.input_data = self.input_merge()
         section = self.node_class_params.get('section', None) \
             if self.node_class_params is not None else "Mysql-data_bank"
         sql = self.node_class_params.get('sql', None) \
@@ -134,8 +143,9 @@ class EndNode(BaseNode):
 
     def run(self):
         is_merge = self.run_params.get('is_merge', None) if self.run_params is not None else False
+        axis = self.run_params.get('axis', None) if self.run_params is not None else 0
         if is_merge:
-            self.output_data = self.input_merge()
+            self.output_data = self.input_merge(axis=axis)
         else:
             self.output_data = self.input_data
         self.is_finished = True
@@ -153,5 +163,13 @@ class DebugNode(BaseNode):
         merge = self.input_merge()
         arg_input = self.run_params.get('input', None) if self.run_params is not None else merge
         self.output_data = merge + " " + arg_input
+        self.is_finished = True
+        return self.output_data
+
+
+class PlaceholderNode(BaseNode):
+
+    def run(self):
+        self.output_data = self.input_merge()
         self.is_finished = True
         return self.output_data

@@ -33,13 +33,12 @@ def _init_node(nodename, config):
     if len(next_nodes) == 0 or next_nodes == "" or next_nodes == []:
         next_nodes = None
     input_data_file = config.get(nodename).get("input")
-    if input_data_file is None or input_data_file == "":
-        input_data = None
+
+    if os.path.exists(input_data_file):
+        input_data = pd.read_csv(input_data_file)
     else:
-        if os.path.exists(input_data_file):
-            input_data = pd.read_csv(input_data_file)
-        else:
-            input_data = input_data_file
+        input_data = None
+
     init_params = {
         "node_name": nodename,
         "next_nodes": next_nodes,
@@ -93,7 +92,7 @@ def run(config=None):
             print(">>> Node [ %s ] is finished, SKIP this Node" % node.node_name)
             continue
         print("\n")
-        print("------------------------ STEP [ %s ]  ------------------------" % i)
+        print("------------------------ STEP %s ------------------------" % i)
         print("NODE NAME :[ %s ] , START TIME : [ %s ] " % (
             node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
         print(">>> [ %s ]  Node Running ... ... " % node.node_name)
