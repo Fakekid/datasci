@@ -90,7 +90,7 @@ def run(config=None):
         if node_name in ready_list:
             ready_list.remove(node_name)
         if node.is_finished:
-            print("NODE NAME :[ %s ] is finished, SKIP this Node" % node.node_name)
+            print("Node [ %s ] is finished, SKIP this Node" % node.node_name)
             continue
         print("\n")
         print("------------------------ STEP [ %s ]  ------------------------" % i)
