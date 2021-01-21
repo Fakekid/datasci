@@ -37,4 +37,4 @@ class BaseNode(object):
             return self.input_data
 
     def run(self):
-        pass
+        print("Run the node %s" % self.node_name)

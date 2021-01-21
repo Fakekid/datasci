@@ -151,7 +151,7 @@ class DebugNode(BaseNode):
     def run(self):
         # node_class_params = self.node_class_params
         merge = self.input_merge()
-        input = self.run_params.get('input', None) if self.run_params is not None else merge
-        self.output_data = merge + " " + input
+        arg_input = self.run_params.get('input', None) if self.run_params is not None else merge
+        self.output_data = merge + " " + arg_input
         self.is_finished = True
         return self.output_data

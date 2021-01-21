@@ -3,7 +3,7 @@ import time
 import json
 from queue import Queue
 import pandas as pd
-from datasci.workflow.node_v2 import EndNode
+from datasci.workflow.node import EndNode
 from datasci.utils.reflection import Reflection
 
 
@@ -87,11 +87,10 @@ def run(config=None):
         print(">>> Ready to Execute Nodes [ %s ]" % ", ".join(ready_list))
         node_name = run_queue.get()
         node = node_map.get(node_name)
-
+        if node_name in ready_list:
+            ready_list.remove(node_name)
         if node.is_finished:
             print("NODE NAME :[ %s ] is finished, SKIP this Node" % node.node_name)
-            if node_name in ready_list:
-                ready_list.remove(node_name)
             continue
         print("\n")
         print("------------------------ STEP [ %s ]  ------------------------" % i)
@@ -99,23 +98,17 @@ def run(config=None):
             node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
         print(">>> [ %s ]  Node Running ... ... " % node.node_name)
         ret = node.run()
-        if node_name in ready_list:
-            ready_list.remove(node_name)
         if isinstance(node, EndNode):
             result[node.node_name] = ret
         print(">>> [ %s ]  Node Finished ! " % node.node_name)
         print("NODE NAME :[ %s ] , FINISHED TIME : [ %s ]  " % (
             node.node_name, time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())))
-
         i += 1
-
         if node.next_nodes is not None:
             for n_name in node.next_nodes:
                 if n_name not in node_map:
-                    sub_node = _init_node(nodename=n_name, config=run_dag_config)
-                    node_map[n_name] = sub_node
-                else:
-                    sub_node = node_map[n_name]
+                    node_map[n_name] = _init_node(nodename=n_name, config=run_dag_config)
+                sub_node = node_map[n_name]
                 if sub_node.input_data is None or isinstance(sub_node.input_data, list):
                     sub_node.add_input(node.output_data)
                 ready_list.append(n_name)
