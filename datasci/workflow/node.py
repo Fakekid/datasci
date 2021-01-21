@@ -1,9 +1,9 @@
 import os
 import time
-import pandas as pd
 from datasci.utils.mysql_utils import MysqlUtils
 from datasci.workflow.base_node import BaseNode
-from datasci.workflow.output.save import JoinProcesser, SaveProcesser
+from datasci.workflow.output.join import JoinProcesser
+from datasci.workflow.output.save import SaveProcesser
 from datasci.workflow.predict.predict import PredictProcesser
 from datasci.workflow.train.train import TrainProcesser
 
@@ -39,17 +39,13 @@ class PredictNode(BaseNode):
 class JoinNode(BaseNode):
 
     def run(self):
-        result = None
         join_key = self.run_params.get('join_key', None) if self.run_params is not None else None
         if isinstance(self.input_data[0], dict):
             self.input_data = self.input_merge()
-            join_class = JoinProcesser(
-                **self.node_class_params) if self.node_class_params is not None else JoinProcesser()
-            result = join_class.run(data_dict=self.input_data, join_key=join_key)
-        elif isinstance(self.input_data[0], pd.DataFrame):
-            if join_key is not None:
-                for item in self.input_data:
-                    result = pd.merge(result, item, on=join_key)
+        join_class = JoinProcesser(
+            **self.node_class_params) if self.node_class_params is not None else JoinProcesser()
+        result = join_class.run(data=self.input_data, join_key=join_key)
+
         self.output_data = result
         self.is_finished = True
         return self.output_data
