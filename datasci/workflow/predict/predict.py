@@ -9,7 +9,6 @@ from datasci.workflow.predict.predict_package import PredictPackage
 from datasci.workflow.input.get_data import get_data
 import pandas as pd
 from datasci.utils.mylog import get_stream_logger
-from datasci.utils.path_check import check_path
 from datasci.workflow.config.task_config import get_config
 
 # 显示所有列
@@ -68,15 +67,22 @@ class PredictProcesser(object):
 
         paths = self.jobs.get('paths')
         self.project_path = paths.get('project_path')
-        check_path(self.project_path)
-        self.result_path = paths.get('result_path')
-        check_path(self.result_path)
-        self.pre_model_path = paths.get('pre_model_path')
-        check_path(self.pre_model_path)
+
+        self.data_path = paths.get('data_path')
+        self.data_path = os.path.join(self.project_path, self.data_path) if not os.path.isabs(
+            self.data_path) else self.data_path
+
         self.model_path = paths.get('model_path')
-        check_path(self.model_path)
+        self.model_path = os.path.join(self.data_path, self.model_path) if not os.path.isabs(
+            self.model_path) else self.model_path
+
         self.feature_process_path = paths.get('feature_package_path')
-        check_path(self.feature_process_path)
+        self.feature_process_path = os.path.join(self.data_path, self.feature_process_path) if not os.path.isabs(
+            self.feature_process_path) else self.feature_process_path
+
+        self.predict_data_path = paths.get('predict_data_path')
+        self.predict_data_path = os.path.join(self.data_path, self.predict_data_path) if not os.path.isabs(
+            self.predict_data_path) else self.predict_data_path
 
     def run(self, data=None, multi_process=False):
         models_config = self.jobs.get('models')
@@ -111,16 +117,16 @@ class PredictProcesser(object):
             model_type = model_config.get('model_type', None)
 
             feature_process_file = model_config.get('predict').get('feature_package_file', None)
-            sub_feature_process_path = os.path.join(self.feature_process_path, model_name)
-            full_feature_process_file = os.path.join(sub_feature_process_path, feature_process_file)
+            full_feature_process_file = os.path.join(self.feature_process_path,
+                                                     feature_process_file) if not os.path.isabs(
+                feature_process_file) else feature_process_file
             if not os.path.exists(full_feature_process_file):
                 self.log.error("Feature group process file %s is not exists ! " % full_feature_process_file)
                 exit(-1)
-            feature_process = GroupFeatureProcesser.read_feature_processer(full_feature_process_file)
+            feature_process = GroupFeatureProcesser.read_feature_processer_v2(full_feature_process_file)
 
             model_file = model_config.get('predict').get('model_file', None)
-            sub_model_path = os.path.join(self.model_path, model_name)
-            full_model_file = os.path.join(sub_model_path, model_file)
+            full_model_file = os.path.join(self.model_path, model_file) if not os.path.isabs(model_file) else model_file
 
             input_config = model_config.get('input').get('predict_data')
 
@@ -138,7 +144,7 @@ class PredictProcesser(object):
             result_dict[model_name] = ret
         return result_dict
 
-    def predict(self, predict_package, feature_process, data=None, input_config=None, is_proba=False, retain_cols = None):
+    def predict(self, predict_package, feature_process, data=None, input_config=None, is_proba=False, retain_cols=None):
         """
         Predict data and save result, get data from config
         Args

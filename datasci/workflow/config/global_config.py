@@ -15,7 +15,5 @@ global_config = {
     "strategy": os.path.join(config_dir, "strategy_config.json"),
     "feature": os.path.join(config_dir, "feature_config.json"),
     "job": os.path.join(config_dir, "jobs_config.json"),
-    "workflow": os.path.join(config_dir, "workflow.json"),
-    "log_path": log_dir,
-    "data_path": data_dir
+    "workflow": os.path.join(config_dir, "workflow.json")
 }

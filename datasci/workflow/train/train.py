@@ -3,7 +3,6 @@ import os
 from datasci.workflow.config.task_config import get_config
 from datasci.workflow.input.get_data import get_data
 from datasci.workflow.train.train_package import TrainPackage
-from datasci.utils.path_check import check_path
 from datasci.workflow.feature.feature_process import GroupFeatureProcesser
 from datasci.utils.mylog import get_stream_logger
 from collections import Iterable
@@ -77,17 +76,29 @@ class TrainProcesser(object):
         self.log.debug("Feature config is : %s" % self.features)
         self.models = get_config(config_type="model", config=model_map)
         self.log.debug("Model config is : %s" % self.models)
+
         paths = self.jobs.get('paths')
         self.project_path = paths.get('project_path')
-        check_path(self.project_path)
-        self.result_path = paths.get('result_path')
-        check_path(self.result_path)
+
+        self.data_path = paths.get('data_path')
+        self.data_path = os.path.join(self.project_path, self.data_path) if not os.path.isabs(
+            self.data_path) else self.data_path
+
         self.pre_model_path = paths.get('pre_model_path')
-        check_path(self.pre_model_path)
+        self.pre_model_path = os.path.join(self.data_path, self.pre_model_path) if not os.path.isabs(
+            self.pre_model_path) else self.pre_model_path
+
         self.model_path = paths.get('model_path')
-        check_path(self.model_path)
+        self.model_path = os.path.join(self.data_path, self.model_path) if not os.path.isabs(
+            self.model_path) else self.model_path
+
         self.feature_process_path = paths.get('feature_package_path')
-        check_path(self.feature_process_path)
+        self.feature_process_path = os.path.join(self.data_path, self.feature_process_path) if not os.path.isabs(
+            self.feature_process_path) else self.feature_process_path
+
+        self.train_data_path = paths.get('train_data_path')
+        self.train_data_path = os.path.join(self.data_path, self.train_data_path) if not os.path.isabs(
+            self.train_data_path) else self.train_data_path
 
     def run(self, data=None, multi_process=False):
         models_config = self.jobs.get('models')
@@ -99,7 +110,6 @@ class TrainProcesser(object):
                 new_thread.start()
                 threads.append(new_thread)
                 i = i + 1
-                # self._run(model_name=model_name, model_config=model_config, result_dict=result_dict, data=data)
             for t in threads:
                 t.join()
         else:
@@ -187,10 +197,11 @@ class TrainProcesser(object):
         tdata = get_data(input_config) if data is None else data
         fpr = feature_process.get_feature_processer()
 
-        model_sub_path = os.path.join(save_path, train_package.model_name)
-        check_path(model_sub_path)
-        model_file_name = "%s_%s.model" % (train_package.model_type, run_time)
-        model_file_path = os.path.join(model_sub_path, model_file_name)
+        model_file_name = "%s_%s_%s.model" % (train_package.model_name, train_package.model_type, run_time)
+        model_file_path = os.path.join(save_path, model_file_name)
+
+        file_name = "%s_%s_%s.pickle.fper" % (train_package.model_name, train_package.model_type, run_time)
+        feature_process_file = os.path.join(feature_process_path, file_name)
 
         if isinstance(tdata, Iterable) and not isinstance(tdata, pd.DataFrame):
             X_train_datas = list()
@@ -202,9 +213,8 @@ class TrainProcesser(object):
             index = 0
             for data in tdata:
                 if save_train_data:
-                    tmp_train_data_path = os.path.join(os.path.dirname(save_path), "train")
-                    tmp_train_data_file = os.path.join(tmp_train_data_path,
-                                                   "%s_%s_%s.data" % (train_package.model_name, run_time, index))
+                    tmp_train_data_file = os.path.join(self.train_data_path,
+                                                       "%s_%s_%s.data" % (train_package.model_name, run_time, index))
                     data.to_csv(tmp_train_data_file)
                     index += 1
 
@@ -226,11 +236,7 @@ class TrainProcesser(object):
             fpr.fit(all_train_data)
             del all_train_data
             if save_gfp:
-                fp_sub_path = os.path.join(feature_process_path, train_package.model_name)
-                check_path(fp_sub_path)
-                file_name = "%s_%s.fper" % (train_package.model_type, run_time)
-                feature_process_file = os.path.join(fp_sub_path, file_name)
-                GroupFeatureProcesser.write_feature_processer(feature_process, feature_process_file)
+                GroupFeatureProcesser.write_feature_processer_v2(feature_process, feature_process_file)
                 self.log.info('Model %s Saved group feature process in dir : %s' % (
                     train_package.model_name, feature_process_file))
             pre_model = None
@@ -263,8 +269,7 @@ class TrainProcesser(object):
                     X_test.shape[0], train_package.model_name, test_ret))
         else:
             if save_train_data:
-                tmp_train_data_path = os.path.join(os.path.dirname(save_path), "train")
-                tmp_train_data_file = os.path.join(tmp_train_data_path,
+                tmp_train_data_file = os.path.join(self.train_data_path,
                                                    "%s_%s.data" % (train_package.model_name, run_time))
                 tdata.to_csv(tmp_train_data_file)
 
@@ -278,11 +283,7 @@ class TrainProcesser(object):
             X_train = fpr.fit_transform(X_train)
 
             if save_gfp:
-                fp_sub_path = os.path.join(feature_process_path, train_package.model_name)
-                check_path(fp_sub_path)
-                file_name = "%s_%s.fper" % (train_package.model_type, run_time)
-                feature_process_file = os.path.join(fp_sub_path, file_name)
-                GroupFeatureProcesser.write_feature_processer(feature_process, feature_process_file)
+                GroupFeatureProcesser.write_feature_processer_v2(feature_process, feature_process_file)
                 self.log.info('Model %s Saved group feature process in dir : %s' % (
                     train_package.model_name, feature_process_file))
 

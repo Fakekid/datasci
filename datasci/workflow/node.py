@@ -5,6 +5,7 @@ from datasci.workflow.base_node import BaseNode
 from datasci.workflow.output.join import JoinProcesser
 from datasci.workflow.output.save import SaveProcesser
 from datasci.workflow.predict.predict import PredictProcesser
+from datasci.workflow.start.init import InitProcesser
 from datasci.workflow.train.train import TrainProcesser
 
 
@@ -79,8 +80,8 @@ class SelectDataFromDict(BaseNode):
             self.output_data = self.input_data
         else:
             keys = list(self.input_data.keys())
-            tag = self.node_class_params.get('tag', None) \
-                if self.node_class_params is not None else keys[0]
+            tag = self.run_params.get('tag', None) \
+                if self.run_params is not None else keys[0]
             self.output_data = self.input_data.get(tag, None)
         self.is_finished = True
         return self.output_data
@@ -90,8 +91,8 @@ class SelectColumnsNode(BaseNode):
 
     def run(self):
         self.input_data = self.input_merge()
-        columns = self.node_class_params.get('columns', None) \
-            if self.node_class_params is not None else self.input_data.columns.tolist()
+        columns = self.run_params.get('columns', None) \
+            if self.run_params is not None else self.input_data.columns.tolist()
         if columns is not None:
             self.output_data = self.input_data[columns]
         self.is_finished = True
@@ -102,10 +103,10 @@ class MysqlExecNode(BaseNode):
 
     def run(self):
         self.input_data = self.input_merge()
-        section = self.node_class_params.get('section', None) \
-            if self.node_class_params is not None else "Mysql-data_bank"
-        sql = self.node_class_params.get('sql', None) \
-            if self.node_class_params is not None else None
+        section = self.run_params.get('section', None) \
+            if self.run_params is not None else "Mysql-data_bank"
+        sql = self.run_params.get('sql', None) \
+            if self.run_params is not None else None
 
         if os.path.exists(sql):
             with open(sql) as f:
@@ -130,6 +131,9 @@ class StartNode(BaseNode):
         from datasci.workflow.config.log_config import log_level
         log = get_stream_logger("START NODE", level=log_level)
         log.info("Job start at %s " % time.strftime("%a %b %d %H:%M:%S %Y", time.localtime()))
+        start_class = InitProcesser(
+            **self.node_class_params) if self.node_class_params is not None else InitProcesser()
+        start_class.run()
         self.output_data = self.input_data
         self.is_finished = True
         return self.output_data
@@ -155,7 +159,6 @@ class EndNode(BaseNode):
 class DebugNode(BaseNode):
 
     def run(self):
-        # node_class_params = self.node_class_params
         merge = self.input_merge()
         arg_input = self.run_params.get('input', None) if self.run_params is not None else merge
         self.output_data = merge + " " + arg_input
