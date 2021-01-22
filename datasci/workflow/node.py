@@ -41,12 +41,14 @@ class JoinNode(BaseNode):
 
     def run(self):
         join_key = self.run_params.get('join_key', None) if self.run_params is not None else None
-        if isinstance(self.input_data[0], dict):
-            self.input_data = self.input_merge()
-        join_class = JoinProcesser(
-            **self.node_class_params) if self.node_class_params is not None else JoinProcesser()
-        result = join_class.run(data=self.input_data, join_key=join_key)
-
+        if self.input_data is not None:
+            if isinstance(self.input_data[0], dict):
+                self.input_data = self.input_merge()
+            join_class = JoinProcesser(
+                **self.node_class_params) if self.node_class_params is not None else JoinProcesser()
+            result = join_class.run(data=self.input_data, join_key=join_key)
+        else:
+            result = None
         self.output_data = result
         self.is_finished = True
         return self.output_data
