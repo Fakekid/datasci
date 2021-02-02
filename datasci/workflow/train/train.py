@@ -233,6 +233,7 @@ class TrainProcesser(object):
 
             self.log.info('%s getting feature processer ... ' % train_package.model_name)
             all_train_data = pd.concat(X_train_datas, axis=0)
+            all_train_data.reset_index(drop=True, inplace=True)
             fpr.fit(all_train_data)
             del all_train_data
             if save_gfp:

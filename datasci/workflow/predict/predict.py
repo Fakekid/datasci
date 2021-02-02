@@ -224,4 +224,5 @@ class PredictProcesser(object):
                 class_num = 1
             result_col = ['%s_%s' % (predict_package.model_name, i) for i in range(class_num)]
             result = pd.concat((retain_data, pd.DataFrame(ret_data, columns=result_col)), axis=1)
+        result.reset_index(drop=True, inplace=True)
         return result
