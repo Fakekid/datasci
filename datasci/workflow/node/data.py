@@ -171,6 +171,6 @@ class SaveMySQLWithDataFrameNode(BaseNode):
         self.input_data = self.input_merge()
         save_class = MySQLDataWriter(section=section, table=table_name, is_flush=is_flush)
         save_class.save_data(self.input_data)
-        self.input_data = self.input_data
+        self.output_data = self.input_data
         self.is_finished = True
         return self.output_data
