@@ -12,6 +12,7 @@ class MySQLDataWriter(object):
     def __init__(self,
                  section='Mysql-data_bank',
                  table='',
+                 is_flush= False,
                  host=None,
                  port=None,
                  user=None,
@@ -36,6 +37,8 @@ class MySQLDataWriter(object):
             databases=db)
         self.engine = create_engine(connect_str, encoding=encoding)
         self.table = table
+        if is_flush:
+            self.engine.execute("TRUNCATE table %s;" % table)
         from datasci.workflow.config.log_config import log_level
         self.log = get_stream_logger("MYSQL BATCH DATA WRITER", level=log_level) if log is None else log
 

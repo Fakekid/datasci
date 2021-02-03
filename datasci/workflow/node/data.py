@@ -1,12 +1,11 @@
 import os
-import time
+import pandas as pd
+from datasci.dumper.data_writer.batch_writer import MySQLDataWriter
 from datasci.dao.mysql_dao import MySQLDao
 from datasci.dao.bean.mysql_conf import MySQLConf
 from datasci.loader.data_reader.batch_reader import MySQLDataReader
 from datasci.utils.mysql_utils import MysqlUtils
 from datasci.workflow.node.base import BaseNode
-from datasci.workflow.output.join import JoinProcesser
-from datasci.workflow.output.save import SaveProcesser
 
 
 class MysqlReadNode(BaseNode):
@@ -14,12 +13,20 @@ class MysqlReadNode(BaseNode):
     def run(self):
         sql = self.run_params.get('sql', None) if self.run_params is not None else None
         section = self.run_params.get('section', None) if self.run_params is not None else None
+        dict_out = self.run_params.get('dict_out', None) if self.run_params is not None else False
         if os.path.exists(sql):
             with open(sql) as f:
                 sql = f.read()
         reader = MySQLDataReader(section=section, sql=sql)
-        self.output_data = reader.read_data()
+        ret = reader.read_data()
+        if dict_out:
+            ret_d = dict()
+            ret_d[self.node_name] = ret
+            self.output_data = ret_d
+        else:
+            self.output_data = ret
         self.is_finished = True
+        return self.output_data
 
 
 class MysqlExecNode(BaseNode):
@@ -108,25 +115,30 @@ class MysqlInsertNode(BaseNode):
         return self.output_data
 
 
-class DataJoinNode(BaseNode):
-
+class DataStackNode(BaseNode):
     def run(self):
-        join_key = self.run_params.get('join_key', None) if self.run_params is not None else None
-        if self.input_data is not None:
-            if isinstance(self.input_data[0], dict):
-                self.input_data = self.input_merge()
-            join_class = JoinProcesser(
-                **self.node_class_params) if self.node_class_params is not None else JoinProcesser()
-            result = join_class.run(data=self.input_data, join_key=join_key)
-        else:
-            result = None
+        axis = self.run_params.get('axis', None) if self.run_params is not None else 0
+        self.output_data = self.input_merge(axis=axis)
+        self.is_finished = True
+        return self.output_data
+
+
+class DataMergeNode(BaseNode):
+    def run(self):
+        result = None
+        on = self.run_params.get('on', None) if self.run_params is not None else None
+        how = self.run_params.get('how', None) if self.run_params is not None else None
+        left_on = self.run_params.get('left_on', None) if self.run_params is not None else None
+        right_on = self.run_params.get('right_on', None) if self.run_params is not None else None
+        for data in self.input_data:
+            result = pd.merge(result, data, how=how, on=on, left_on=left_on,
+                              right_on=right_on) if result is not None else data
         self.output_data = result
         self.is_finished = True
         return self.output_data
 
 
 class SelectDataFromDict(BaseNode):
-
     def run(self):
         self.input_data = self.input_merge()
         if not isinstance(self.input_data, dict):
@@ -141,7 +153,6 @@ class SelectDataFromDict(BaseNode):
 
 
 class SelectColumnsNode(BaseNode):
-
     def run(self):
         self.input_data = self.input_merge()
         columns = self.run_params.get('columns', None) \
@@ -152,21 +163,14 @@ class SelectColumnsNode(BaseNode):
         return self.output_data
 
 
-class SaveNode(BaseNode):
-
+class SaveMySQLWithDataFrameNode(BaseNode):
     def run(self):
+        section = self.run_params.get('section', None) if self.run_params is not None else None
+        table_name = self.run_params.get('table_name', None) if self.run_params is not None else None
+        is_flush = self.run_params.get('is_flush', None) if self.run_params is not None else  False
         self.input_data = self.input_merge()
-        save_class = SaveProcesser(
-            **self.node_class_params) if self.node_class_params is not None else SaveProcesser()
-
-        output_config = self.run_params.get('output_config', None) if self.run_params is not None else None
-        pagesize = self.run_params.get('pagesize', 10000) if self.run_params is not None else 10000
-        model_name = self.run_params.get('model_name', 'default') if self.run_params is not None else 'default'
-
-        ex_col = {
-            'model_version': model_name,
-            'dt': "%s" % time.strftime("%Y%m%d", time.localtime())
-        }
-        save_class.run(data=self.input_data, extend_columns=ex_col, output_config=output_config, pagesize=pagesize)
+        save_class = MySQLDataWriter(section=section, table=table_name, is_flush=is_flush)
+        save_class.save_data(self.input_data)
+        self.input_data = self.input_data
         self.is_finished = True
         return self.output_data
