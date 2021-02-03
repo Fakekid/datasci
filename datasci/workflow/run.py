@@ -3,7 +3,7 @@ import time
 import json
 from queue import Queue
 import pandas as pd
-from datasci.workflow.node import EndNode
+from datasci.workflow.node.common import EndNode
 from datasci.utils.reflection import Reflection
 
 

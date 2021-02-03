@@ -25,7 +25,10 @@ class BaseNode(object):
                 return self.input_data[0]
             else:
                 if isinstance(self.input_data[0], pd.DataFrame):
-                    return pd.concat(self.input_data, axis=axis)
+                    ret_value = pd.concat(self.input_data, axis=axis)
+                    if axis == 0:
+                        ret_value.reset_index(drop=True, inplace=True)
+                    return ret_value
                 elif isinstance(self.input_data[0], dict):
                     result = dict()
                     for item in self.input_data:
