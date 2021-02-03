@@ -34,7 +34,7 @@ def _init_node(nodename, config):
         next_nodes = None
     input_data_file = config.get(nodename).get("input")
 
-    if os.path.exists(input_data_file):
+    if input_data_file is not None and os.path.exists(input_data_file):
         input_data = pd.read_csv(input_data_file)
     else:
         input_data = None
