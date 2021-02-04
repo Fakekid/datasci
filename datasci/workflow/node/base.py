@@ -33,6 +33,7 @@ class BaseNode(object):
                     result = dict()
                     for item in self.input_data:
                         result.update(item)
+                    return result
                 elif isinstance(self.input_data[0], str):
                     return ",".join(self.input_data)
         else:
