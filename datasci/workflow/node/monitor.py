@@ -154,7 +154,7 @@ class AlertMsgNode(BaseNode):
             action = ret[13]
             if status == 1 and action == 1:
                 msg = "告警 %s：模型id为 %s (模型名称 %s, 业务线 %s）， 指标 %s， 基准值 %s，评估值 %s，" \
-                  "基准偏移率 %s， 1天衰减量 %s， 2天衰减量 %s ，3天衰减量 %s ，5天衰减量 %s， 7天衰减量 %s \n" \
+                  "基准偏移率 %s， 1天衰减率 %s， 2天衰减率 %s ，3天衰减率 %s ，5天衰减率 %s， 7天衰减率 %s \n" \
                   % (i, ret[0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6], ret[7], ret[8], ret[9], ret[10], ret[11])
                 alert_msg = alert_msg + msg if alert_msg is not None else msg
                 i = i + 1
