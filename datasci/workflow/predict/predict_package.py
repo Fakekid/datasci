@@ -1,5 +1,5 @@
 import os
-from datasci.workflow.model.model_func import load_model_func, predict_func
+from datasci.workflow.model.model_func import load_model_func, predict_func, predict_proba_func
 from datasci.utils.mylog import get_file_logger, get_stream_logger
 
 
@@ -58,6 +58,29 @@ class PredictPackage(object):
         }
 
         result = predict_func(m_type=self.model_type, model=model, func_params=predict_params, config=self.model_map)
+        return result
+
+    def predict_proba(self, data):
+        """
+        Predict data and save result
+
+        Args
+        -------
+        data
+            predict data
+
+        Returns
+        -------
+        result
+            result and save
+        """
+
+        model = self._get_model()
+        predict_params = {
+            "data": data
+        }
+
+        result = predict_proba_func(m_type=self.model_type, model=model, func_params=predict_params, config=self.model_map)
         return result
 
     def _get_model(self):

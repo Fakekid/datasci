@@ -1,5 +1,7 @@
 # -*- coding:utf8 -*-
+import os
 import shelve
+import pickle
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import ColumnTransformer
 from datasci.workflow.feature.tal_feature_group import FeaturePackage
@@ -188,7 +190,8 @@ class GroupFeatureProcesser(object):
         if self.process_mode == 'FeatureGroup':
             if self.process_config == '':
                 return None
-            result = FeaturePackage(init_config=self.process_config, order=self.process_dag, encoder_map=self.encoders, log=self.log)
+            result = FeaturePackage(init_config=self.process_config, order=self.process_dag, encoder_map=self.encoders,
+                                    log=self.log)
         self.feature_package = result
         return result
 
@@ -211,6 +214,22 @@ class GroupFeatureProcesser(object):
             db["feature"] = self
             db.close()
 
+    def write_v2(self, file):
+        """
+            Save self
+            Args
+            -------
+            file
+                save file path
+
+            Returns
+            -------
+            None
+        """
+        with open(file, 'wb') as f:
+            pickle.dump(self, f)
+        f.close()
+
     @staticmethod
     def write_feature_processer(feature_processer, file):
         """
@@ -231,6 +250,25 @@ class GroupFeatureProcesser(object):
             db.close()
 
     @staticmethod
+    def write_feature_processer_v2(feature_processer, file):
+        """
+            Save feature processer
+            Args
+            -------
+            feature_processer
+                feature processer
+            file
+                save file path
+
+            Returns
+            -------
+            None
+        """
+        with open(file, 'wb') as f:
+            pickle.dump(feature_processer, f)
+        f.close()
+
+    @staticmethod
     def read_feature_processer(file):
         """
             Read feature processer from file
@@ -248,3 +286,20 @@ class GroupFeatureProcesser(object):
             db.close()
             return feature_processer
 
+    @staticmethod
+    def read_feature_processer_v2(file):
+        """
+            Read feature processer from file
+            Args
+            -------
+            file
+                file path
+
+            Returns
+            -------
+            GroupFeatureProcesser
+        """
+        with open(file, 'rb') as f:
+            feature_processer = pickle.load(f)
+        f.close()
+        return feature_processer

@@ -1,10 +1,11 @@
 import json
-
+from datasci.utils.path_check import check_path
 
 def _get_file_config(config_type, config):
     if config is None:
         from datasci.workflow.config.global_config import global_config
         config = global_config.get(config_type)
+        check_path(config, is_make=True)
     with open(config) as f:
         conf = f.read()
         return json.loads(conf)
