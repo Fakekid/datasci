@@ -29,10 +29,10 @@ class TextSequenceDataset(Dataset):
     def __getitem__(self, idx):
         sample = dict()
 
-        x = self.X[idx]
+        x = str(self.X[idx])
+
         if self.x_post_func is not None:
             x = self.x_post_func(x)
-
         if len(x) > self.max_seq_len:
             x = x[:self.max_seq_len]
 

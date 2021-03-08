@@ -76,9 +76,12 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
                 labels = labels.numpy()
                 logits = logits.detach().numpy()
 
-            metrics_dic = evaluate(labels, logits)
+            try:
+                metrics_dic = evaluate(y=labels, logits=logits)
+            except Exception as e:
+                pass
             acc, p, r, auc, f1 = \
-                metrics_dic['acc'], metrics_dic['p'], metrics_dic['r'], metrics_dic['auc'], metrics_dic['f1']
+                float(metrics_dic['accuracy']), float(metrics_dic['precision']), float(metrics_dic['recall']), float(metrics_dic['auc']), float(metrics_dic['f1'])
 
             batch_count = ep * len(train_data_loader) + idx
             if is_summary:
@@ -120,9 +123,13 @@ def downstream_finetune(model, train_data_loader, test_data_loader=None, epoch=1
                     labels = labels.numpy()
                     logits = logits.detach().numpy()
 
-                metrics_dic = evaluate(labels, logits)
+                try:
+                    metrics_dic = evaluate(y=labels, logits=logits)
+                except Exception as e:
+                    pass
+
                 acc, p, r, auc, f1 = \
-                    metrics_dic['acc'], metrics_dic['p'], metrics_dic['r'], metrics_dic['auc'], metrics_dic['f1']
+                    float(metrics_dic['accuracy']), float(metrics_dic['precision']), float(metrics_dic['recall']), float(metrics_dic['auc']), float(metrics_dic['f1'])
                 accu_acc += acc
                 accu_p += p
                 accu_r += r

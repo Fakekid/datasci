@@ -137,7 +137,7 @@ def evaluate(estimator=None, X=None, y=None, logits=None, average='macro'):
     """
     assert estimator is not None or logits is not None, ValueError('estimator和logits不能同时为空')
     assert y is not None, ValueError('y不能为空')
-    assert logits is None and X is not None, ValueError('当logits为空时X不能为空')
+    assert logits is not None or X is not None, ValueError('当logits为空时X不能为空')
 
     if estimator is not None:
         pred_proba = estimator.predict_proba(X)[:, 1]
