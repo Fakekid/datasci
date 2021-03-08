@@ -23,7 +23,7 @@ class MonitorLogNode(BaseNode):
 
         sql = """
             select
-                   records.model_id,
+                   configs.id as model_id,
                    records.model_name,
                    records.product_line,
                    records.task_name,
@@ -36,7 +36,7 @@ class MonitorLogNode(BaseNode):
                  ( select * from xes_1v1_model_monitor_records where time_tag >= {0} and time_tag <= {1}) records
             left join
                      xes_1v1_model_monitor_configs configs
-            on records.model_id = configs.model_id
+            on records.model_name = configs.model_name
             order by records.time_tag desc
         """.format(min_time_tag, max_time_tag)
 
@@ -99,7 +99,7 @@ class MonitorLogNode(BaseNode):
         s = ['%s'] * 16
         insert_sql = "insert into xes_1v1_model_monitor_logs " \
                      "(model_id, model_name, product_line, task_name, indicator,base_value, value, bias_ratio, attenuation_ratio_1d, attenuation_ratio_2d, attenuation_ratio_3d, attenuation_ratio_5d,attenuation_ratio_7d, status, action, time_tag)" \
-                     "VALUES ( " + ",".join(s) + ")"
+                     "VALUES ( " + ",".join(s) + ")  ON DUPLICATE KEY UPDATE update_time = null"
         mysql_Utils.get_executemany_sql(sql=insert_sql, data_info=data_info)
 
         self.output_data = None
@@ -119,7 +119,6 @@ class AlertMsgNode(BaseNode):
         time_tag = (date.today() + timedelta(days=timedelay)).strftime("%Y%m%d")
         sql = """
             select
-                distinct
                 model_id,
                 model_name,
                 product_line,
@@ -153,9 +152,9 @@ class AlertMsgNode(BaseNode):
             status = ret[12]
             action = ret[13]
             if status == 1 and action == 1:
-                msg = "告警 %s：模型id为 %s (模型名称 %s, 业务线 %s）， 指标 %s， 基准值 %s，评估值 %s，" \
+                msg = "告警 %s：日期 %s 模型id为 %s (模型名称 %s, 业务线 %s）， 指标 %s， 基准值 %s，评估值 %s，" \
                   "基准偏移率 %s， 1天衰减率 %s， 2天衰减率 %s ，3天衰减率 %s ，5天衰减率 %s， 7天衰减率 %s \n" \
-                  % (i, ret[0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6], ret[7], ret[8], ret[9], ret[10], ret[11])
+                  % (i,time_tag, ret[0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6], ret[7], ret[8], ret[9], ret[10], ret[11])
                 alert_msg = alert_msg + msg if alert_msg is not None else msg
                 i = i + 1
         self.output_data = alert_msg
