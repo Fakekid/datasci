@@ -1,12 +1,14 @@
+from datasci.utils.mylog import get_stream_logger
 from datasci.utils.mysql_utils import MysqlUtils
 from datasci.workflow.node.base import BaseNode
 import json
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 
 
 def get_bias_ratio(value, base_value):
     bias_ratio = round(abs((base_value - value) / (base_value + 1e-7)), 4) if base_value is not None else 0.0
     return bias_ratio
+
 
 class MonitorLogNode(BaseNode):
 
@@ -115,7 +117,14 @@ class AlertMsgNode(BaseNode):
         section = 'Mysql-data_bank'
         mysql_Utils = MysqlUtils(section)
         timedelay = self.run_params.get('timedelta', None) if self.run_params is not None else 0
-        max_bias = self.run_params.get('max_bias', None) if self.run_params is not None else 0.1
+        max_bias = self.run_params.get('max_bias', None) if self.run_params is not None else None
+        max_bias_ratio = max_bias.get('bias_ratio', 0.15) if max_bias is not None else 0.15
+        max_attenuation_ratio_1d = max_bias.get('attenuation_ratio_1d', 0.15) if max_bias is not None else 0.15
+        max_attenuation_ratio_2d = max_bias.get('attenuation_ratio_2d', 0.15) if max_bias is not None else 0.15
+        max_attenuation_ratio_3d = max_bias.get('attenuation_ratio_3d', 0.15) if max_bias is not None else 0.15
+        max_attenuation_ratio_5d = max_bias.get('attenuation_ratio_5d', 0.15) if max_bias is not None else 0.15
+        max_attenuation_ratio_7d = max_bias.get('attenuation_ratio_7d', 0.15) if max_bias is not None else 0.15
+
         time_tag = (date.today() + timedelta(days=timedelay)).strftime("%Y%m%d")
         sql = """
             select
@@ -138,13 +147,19 @@ class AlertMsgNode(BaseNode):
             where
                 time_tag = {0} 
                 and (bias_ratio > {1}
-                or attenuation_ratio_1d > {1} 
-                or attenuation_ratio_2d > {1}
-                or attenuation_ratio_3d > {1}
-                or attenuation_ratio_5d > {1}
-                or attenuation_ratio_7d > {1}
+                or attenuation_ratio_1d > {2} 
+                or attenuation_ratio_2d > {3}
+                or attenuation_ratio_3d > {4}
+                or attenuation_ratio_5d > {5}
+                or attenuation_ratio_7d > {6}
                 ) 
-        """.format(time_tag, max_bias)
+        """.format(time_tag, max_bias_ratio, max_attenuation_ratio_1d, max_attenuation_ratio_2d,
+                   max_attenuation_ratio_3d, max_attenuation_ratio_5d, max_attenuation_ratio_7d)
+
+        from datasci.workflow.config.log_config import log_level
+        log = get_stream_logger("ALERT MSG NODE", level=log_level)
+        log.debug("Query sql : %s" % sql)
+
         result = mysql_Utils.get_result_sql(sql=sql)
         alert_msg = None
         i = 1
@@ -153,13 +168,11 @@ class AlertMsgNode(BaseNode):
             action = ret[13]
             if status == 1 and action == 1:
                 msg = "告警 %s：日期 %s 模型id为 %s (模型名称 %s, 业务线 %s）， 指标 %s， 基准值 %s，评估值 %s，" \
-                  "基准偏移率 %s， 1天衰减率 %s， 2天衰减率 %s ，3天衰减率 %s ，5天衰减率 %s， 7天衰减率 %s \n" \
-                  % (i,time_tag, ret[0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6], ret[7], ret[8], ret[9], ret[10], ret[11])
+                      "基准偏移率 %s， 1天衰减率 %s， 2天衰减率 %s ，3天衰减率 %s ，5天衰减率 %s， 7天衰减率 %s \n" \
+                      % (i, time_tag, ret[0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6], ret[7], ret[8], ret[9],
+                         ret[10], ret[11])
                 alert_msg = alert_msg + msg if alert_msg is not None else msg
                 i = i + 1
         self.output_data = alert_msg
         self.is_finished = True
         return self.output_data
-
-
-
