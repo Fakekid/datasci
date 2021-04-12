@@ -1,4 +1,6 @@
 from sklearn import metrics
+
+
 class CommonEvaluate(object):
     def __init__(self, ):
         pass
@@ -13,5 +15,3 @@ class CommonEvaluate(object):
         metrics_dict['precision'] = metrics.precision_score(label, cls_data)
         metrics_dict['f1_score'] = metrics.f1_score(label, cls_data)
         return metrics_dict
-
-
