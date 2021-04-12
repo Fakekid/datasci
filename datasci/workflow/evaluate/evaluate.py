@@ -211,7 +211,7 @@ class EvaluateProcesser(object):
         except IndexError:
             class_num = 1
         result_col = ['proba_%s' % i for i in range(class_num)]
-        ret_arr = np.vstack((target_data.values, proba_predict_data, cls_predict_data))
+        ret_arr = np.hstack((target_data.values.reshape(-1, 1), proba_predict_data, cls_predict_data.reshape(-1, 1)))
         result_cols = ['label'] + result_col + ['cls']
         ret = pd.DataFrame(ret_arr, columns= result_cols)
         return ret
