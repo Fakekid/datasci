@@ -192,7 +192,7 @@ class EvaluateProcesser(object):
         eval_results = dict()
         for eval_function in eval_functions:
             eval_func = get_evaluator(eval_function)
-            eval_result = eval_func(result)
+            eval_result = eval_func.evaluate(result)
             eval_results.update(eval_result)
         return eval_results
 
