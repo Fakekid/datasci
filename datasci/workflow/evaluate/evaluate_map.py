@@ -27,7 +27,7 @@ def get_evaluator(evaluate_config):
         return None
     if class_name is None:
         return None
-    params = evaluate_func.get("params", None)
+    params = evaluate_config.get("params", None)
 
     cls_obj = Reflection.reflect_obj(module_path=module_path, class_name=class_name, params=params)
     return cls_obj
