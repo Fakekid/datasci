@@ -9,7 +9,7 @@ class CommonEvaluate(object):
         metrics_dict = dict()
         label = data['label']
         cls_data = data['cls']
-        proba_data = data.drop(['label', 'cls'], axis=1, inplace=True)
+        proba_data = data.drop(['label', 'cls'], axis=1)
         metrics_dict['auc'] = metrics.roc_auc_score(label, proba_data[:, 1])
         metrics_dict['recall'] = metrics.recall_score(label, cls_data)
         metrics_dict['precision'] = metrics.precision_score(label, cls_data)
