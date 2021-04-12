@@ -200,7 +200,6 @@ class EvaluateProcesser(object):
         data[data.isnull()] = np.NaN
         data.drop_duplicates(inplace=True)
         target_data = data[label_column]
-        target_data.rename({label_column: 'label'}, inplace=True)
         self.log.info('%s feature engineering starting ... ...' % predict_package.model_name)
         select_data = feature_process.select_columns(data=data)
         feature_package = feature_process.get_feature_package()
@@ -212,6 +211,7 @@ class EvaluateProcesser(object):
         except IndexError:
             class_num = 1
         result_col = ['proba_%s' % i for i in range(class_num)]
-        ret = pd.concat((target_data, pd.DataFrame(proba_predict_data, columns=result_col),
-                         pd.DataFrame(cls_predict_data, columns=['cls'])), axis=1)
+        ret = pd.concat(
+            (pd.DataFrame(target_data, columns=['label']), pd.DataFrame(proba_predict_data, columns=result_col),
+             pd.DataFrame(cls_predict_data, columns=['cls'])), axis=1)
         return ret
