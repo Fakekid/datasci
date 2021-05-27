@@ -1,3 +1,5 @@
+import datetime
+
 from datasci.utils.mylog import get_stream_logger
 from datasci.utils.mysql_utils import MysqlUtils
 from datasci.workflow.node.base import BaseNode
@@ -8,6 +10,40 @@ from datetime import date, timedelta
 def get_bias_ratio(value, base_value):
     bias_ratio = round(abs((base_value - value) / (base_value + 1e-7)), 4) if base_value is not None else 0.0
     return bias_ratio
+
+
+class SaveMonitorIndicatorsNode(BaseNode):
+
+    def run(self):
+        if self.input_data is not None:
+            self.input_data = self.input_merge()
+        indicator_value = dict()
+        for k, v in self.input_data.items():
+            indicator_value[k] = float('%0.4f' % v)
+
+        indicator_value = json.dumps(indicator_value)
+
+        section = 'Mysql-data_bank'
+        mysql_Utils = MysqlUtils(section)
+        data_info = list()
+        model_name = self.run_params.get('model_name', None) if self.run_params is not None else 'test_model_name'
+        task_name = self.run_params.get('task_name', None) if self.run_params is not None else -1
+        product_line = self.run_params.get('product_line', None) if self.run_params is not None else -1
+
+        time_seg = self.run_params.get('time_seg', None) if self.run_params is not None else 'D'
+
+        if time_seg is 'D':
+            time_tag = (date.today() + timedelta(days=-1)).strftime("%Y%m%d")
+        elif time_seg is 'H':
+            time_tag = (datetime.datetime.now() + timedelta(hours=-1)).strftime("%Y%m%d%H")
+
+        data_info.append((model_name, product_line, task_name, indicator_value, time_tag))
+
+        s = ['%s'] * 5
+        insert_sql = "insert into xes_1v1_model_monitor_records " \
+                     "(model_name,  product_line,task_name, indicator_value, time_tag)" \
+                     "VALUES ( " + ",".join(s) + ")  ON DUPLICATE KEY UPDATE update_time = null"
+        mysql_Utils.get_executemany_sql(sql=insert_sql, data_info=data_info)
 
 
 class MonitorLogNode(BaseNode):
