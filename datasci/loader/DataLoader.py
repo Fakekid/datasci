@@ -194,7 +194,7 @@ def process_data(data, op_func, num_workers=1, **kwargs):
                 if idx == 0:
                     for item in subprocess_result[:-1]:
                         seg_locale.append(item.shape[1] + seg_locale[-1])
-                    seg_locale = seg_locale[1: -1]
+                    seg_locale = seg_locale[1:]
 
                 tmp_data = np.concatenate(subprocess_result, axis=1)
             else:
