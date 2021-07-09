@@ -175,7 +175,7 @@ def process_data(data, op_func, num_workers=1, **kwargs):
 
         # 向进程池分发任务
         for idx in range(len(batch_idxs)):
-            # 分批将数据放入不是进程
+            # 分批将数据放入进程
             _ = pool.apply_async(_process_data_subprocessing,
                                  (idx, manager_dict,
                                   data[batch_idxs[idx]] if not is_tuple_data else [item[batch_idxs[idx]] for item in
