@@ -1,7 +1,6 @@
 import traceback
 from rocketmq.client import Producer, Message
 import json
-import rocketmq
 
 
 class RocketMQ(object):
