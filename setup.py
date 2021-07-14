@@ -39,6 +39,7 @@ setup(name='datasci',
           'xgboost>=0.71',
           'scipy>=1.4.1',
           'scikit_learn==0.22.1',
-          'sqlalchemy>=1.3.22'
+          'sqlalchemy>=1.3.22',
+          'rocketmq-client-python>=2.0.0'
       ],
       zip_safe=False)
