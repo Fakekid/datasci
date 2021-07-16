@@ -49,7 +49,7 @@ class RocketMQ(object):
         tag = kwargs.get('tag')
         assert self.msg is not None or topic is not None, \
             ValueError('当创建RocketMQ对象时没有设置topic，则发送消息时要指定topic和tag')
-        assert self.msg is not None and tag is not None, \
+        assert self.msg is not None or tag is not None, \
             ValueError('当创建RocketMQ对象时没有设置topic，则发送消息时要指定topic和tag')
 
         if not self.msg:
@@ -63,7 +63,7 @@ class RocketMQ(object):
                 print(traceback.format_exc())
                 return 2, traceback.format_exc()
             msg_body.encode('utf8')
-        elif isinstance(msg_body, json):
+        else:
             msg_body = json.dumps(msg_body).encode('utf8')
 
         self.msg.set_body(msg_body)
