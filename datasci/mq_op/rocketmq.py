@@ -47,9 +47,9 @@ class RocketMQ(object):
         """
         topic = kwargs.get('topic')
         tag = kwargs.get('tag')
-        assert self.msg is None and topic is None, \
+        assert self.msg is not None or topic is not None, \
             ValueError('当创建RocketMQ对象时没有设置topic，则发送消息时要指定topic和tag')
-        assert self.msg is None and tag is None, \
+        assert self.msg is not None and tag is not None, \
             ValueError('当创建RocketMQ对象时没有设置topic，则发送消息时要指定topic和tag')
 
         if not self.msg:
