@@ -225,7 +225,7 @@ class MySQLDao(Dao):
 
         connector.execute(sql)
 
-    def execute_sql(self, sql):
+    def execute_sql(self, sql, verbose=True):
         """
         execute sql
         Args:
@@ -234,6 +234,12 @@ class MySQLDao(Dao):
         Returns:
           list data
         """
+        if not self.is_connected():
+            self.reconnect()
+
+        if verbose:
+            print('{}\n{}\n{}'.format('=' * 40, sql, '=' * 40))
+
         cursor = self.connector.cursor()
         cursor.execute(sql)
         results = cursor.fetchall()
